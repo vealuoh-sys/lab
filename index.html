@@ -178,6 +178,17 @@
   /* hide table (including thead) when all its rows are empty */
   table.table-empty { display: none; }
 
+  /* Keep the data-entry screen complete; empty items are hidden only while printing. */
+  @media screen {
+    tbody tr.empty-row { display: table-row; }
+    .section.all-empty { display: block; }
+    .subsection-block.all-empty { display: block; }
+    .section.all-empty thead,
+    .subsection-block.all-empty thead { display: table-header-group; }
+    .patient-field.field-empty { display: flex; }
+    table.table-empty { display: table; }
+  }
+
   tbody td { padding: 7px 36px; vertical-align: middle; }
 
   .col-test { font-weight: 500; color: var(--text); min-width: 200px; }
