@@ -142,7 +142,19 @@
 
   .subsection-block.all-empty { display: none; }
 
-  /* ── TABLE ── */
+  /* Inline subsection label rows inside unified CBC table */
+  .inline-sub-label {
+    background: var(--teal-light);
+    color: var(--teal);
+    padding: 4px 36px;
+    font-size: 9.5px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-left: 3px solid var(--teal);
+  }
+
+  tr.sub-label-row.all-empty { display: none; }
   table { width: 100%; border-collapse: collapse; }
 
   thead tr {
@@ -411,6 +423,9 @@
     /* hide empty data rows */
     tbody tr.empty-row { display: none !important; }
 
+    /* hide empty sub-label rows in unified table */
+    tr.sub-label-row.all-empty { display: none !important; }
+
     /* hide empty patient fields */
     .patient-field.field-empty { display: none !important; }
 
@@ -676,18 +691,20 @@
     </table>
   </div>
 
+
   <!-- ══ HEMATOLOGY ══ -->
   <div class="section" id="sec-hema">
     <div class="section-header">Hematology</div>
 
+    <!-- ESR -->
     <div class="subsection-block" id="sub-esr">
       <div class="subsection-header">ESR</div>
       <table>
-        <thead class="hidden-thead"><tr>
-          <th class="col-test"></th>
-          <th class="col-result"></th>
-          <th class="col-unit"></th>
-          <th class="col-range"></th>
+        <thead><tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
         </tr></thead>
         <tbody>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-esr">
@@ -700,167 +717,159 @@
       </table>
     </div>
 
-    <div class="subsection-block" id="sub-wbc">
-      <div class="subsection-header">Blood CP / FBC / CBC – WBCs</div>
-      <table>
-        <thead><tr>
-          <th class="col-test">Test Name</th>
-          <th class="col-result">Result</th>
-          <th class="col-unit">Unit</th>
-          <th class="col-range">Reference Range</th>
-        </tr></thead>
+    <!-- CBC -->
+    <div class="subsection-block" id="sub-cbc">
+      <div class="subsection-header">Blood CP / FBC / CBC</div>
+      <table id="cbc-unified-table">
+        <thead>
+          <tr>
+            <th class="col-test">Test Name</th>
+            <th class="col-result">Result</th>
+            <th class="col-unit">Unit</th>
+            <th class="col-range">Reference Range</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+
+          <!-- WBCs -->
+          <tr class="sub-label-row" data-sub-label="sub-wbc-label">
+            <td colspan="4" class="inline-sub-label">WBCs</td>
+          </tr>
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">WBC (White Blood Cells)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">4 – 11 × 10³/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Neutrophils (NEU)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">40 – 70 %</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Lymphocytes (LYM)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">20 – 40 %</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Monocytes (Mon)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">4 – 12 %</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Eosinophils (EOSI)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">2 – 6 %</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Basophils (BASO)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">0 – 1.7 %</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Neutrophils</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">2 – 7 × 10³/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Lymphocytes</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">1 – 3 × 10³/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Monocytes</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">0.24 – 0.79 × 10³/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Eosinophils</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">0.03 – 0.44 × 10³/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-wbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Basophils</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">0 – 0.80 × 10³/µL</td>
           </tr>
-        </tbody>
-      </table>
-    </div>
 
-    <div class="subsection-block" id="sub-rbc">
-      <div class="subsection-header">RBCs</div>
-      <table>
-        <thead class="hidden-thead"><tr>
-          <th class="col-test"></th>
-          <th class="col-result"></th>
-          <th class="col-unit"></th>
-          <th class="col-range"></th>
-        </tr></thead>
-        <tbody>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <!-- RBCs -->
+          <tr class="sub-label-row" data-sub-label="sub-rbc-label">
+            <td colspan="4" class="inline-sub-label">RBCs</td>
+          </tr>
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">RBC (Red Blood Cells)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10⁶/µL</td>
             <td class="col-range">4.0 – 5.3 × 10⁶/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">Hemoglobin (HB)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">g/dL</td>
             <td class="col-range">14 – 17 g/dL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">HCT / PCV (Hematocrit)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">33 – 43 %</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">MCV (Mean Corpuscular Volume)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">fL</td>
             <td class="col-range">76 – 90 fL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">MCH (Mean Corpuscular Hemoglobin)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">pg</td>
             <td class="col-range">25 – 31 pg</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">MCHC</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">g/dL</td>
             <td class="col-range">30 – 35 g/dL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">RDW (Red Cell Distribution Width)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">g/dL</td>
             <td class="col-range">11.5 – 12.5 g/dL</td>
           </tr>
-        </tbody>
-      </table>
-    </div>
 
-    <div class="subsection-block" id="sub-plt">
-      <div class="subsection-header">Platelets</div>
-      <table>
-        <thead class="hidden-thead"><tr>
-          <th class="col-test"></th>
-          <th class="col-result"></th>
-          <th class="col-unit"></th>
-          <th class="col-range"></th>
-        </tr></thead>
-        <tbody>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-plt">
+          <!-- Platelets -->
+          <tr class="sub-label-row" data-sub-label="sub-plt-label">
+            <td colspan="4" class="inline-sub-label">Platelets</td>
+          </tr>
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-plt-label">
             <td class="col-test">PLT (Platelet Count)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">150 – 400 × 10³/µL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-hema" data-sub="sub-plt">
+          <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-plt-label">
             <td class="col-test">MPV (Mean Platelet Volume)</td>
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">fL</td>
             <td class="col-range">7 – 11 fL</td>
           </tr>
+
         </tbody>
       </table>
     </div>
+
   </div>
 
   <!-- ══ IMMUNE CHEMISTRY ══ -->
@@ -1205,19 +1214,31 @@
   function updateSectionVisibility() {
     // Mark each table as empty if it has zero filled rows
     document.querySelectorAll('table').forEach(table => {
-      const filled = table.querySelectorAll('tbody tr:not(.empty-row)').length;
+      const filled = table.querySelectorAll('tbody tr:not(.empty-row):not(.sub-label-row)').length;
       table.classList.toggle('table-empty', filled === 0);
     });
 
-    // Subsection blocks
+    // Subsection blocks (old style + new sub-cbc)
     document.querySelectorAll('.subsection-block').forEach(block => {
-      const filled = block.querySelectorAll('tbody tr:not(.empty-row)').length;
-      block.classList.toggle('all-empty', filled === 0);
+      const id = block.id;
+      const filled = block.querySelectorAll(`tbody tr.empty-row[data-sub="${id}"]`).length;
+      const total  = block.querySelectorAll(`tbody tr.empty-row`).length +
+                     block.querySelectorAll(`tbody tr:not(.empty-row):not(.sub-label-row)`).length;
+      const filledRows = block.querySelectorAll('tbody tr:not(.empty-row):not(.sub-label-row)').length;
+      block.classList.toggle('all-empty', filledRows === 0);
+    });
+
+    // Inline sub-label rows (unified CBC table)
+    document.querySelectorAll('tr.sub-label-row').forEach(labelRow => {
+      const label = labelRow.dataset.subLabel;
+      const dataRows = document.querySelectorAll(`tr[data-sublabel="${label}"]`);
+      const anyFilled = Array.from(dataRows).some(r => !r.classList.contains('empty-row'));
+      labelRow.classList.toggle('all-empty', !anyFilled);
     });
 
     // Top-level sections
     document.querySelectorAll('.section').forEach(sec => {
-      const filled = sec.querySelectorAll('tbody tr:not(.empty-row)').length;
+      const filled = sec.querySelectorAll('tbody tr:not(.empty-row):not(.sub-label-row)').length;
       sec.classList.toggle('all-empty', filled === 0);
     });
   }
