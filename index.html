@@ -122,6 +122,13 @@
   /* hidden when all rows inside are empty */
   .section.all-empty { display: none; }
 
+  /* also hide the column-header row when section is empty */
+  .section.all-empty thead,
+  .subsection-block.all-empty thead { display: none; }
+
+  /* hide blank patient fields on screen */
+  .patient-field.field-empty { display: none; }
+
   .subsection-header {
     background: var(--teal-light);
     color: var(--teal);
@@ -158,8 +165,18 @@
   tbody tr { border-bottom: 1px solid #e8eef5; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
 
-  /* rows with no result are hidden on screen too once JS runs */
-  tbody tr.empty-row { opacity: 0.35; }
+  /* hide empty rows always (screen + print) */
+  tbody tr.empty-row { display: none; }
+
+  /* hide entire section (header + thead + all rows) when nothing filled */
+  .section.all-empty { display: none; }
+  .subsection-block.all-empty { display: none; }
+
+  /* hide empty patient fields on screen too */
+  .patient-field.field-empty { display: none; }
+
+  /* hide table (including thead) when all its rows are empty */
+  table.table-empty { display: none; }
 
   tbody td { padding: 7px 36px; vertical-align: middle; }
 
@@ -256,15 +273,21 @@
 
     .toolbar { display: none !important; }
 
-    /* hide empty rows */
+    /* hide empty data rows */
     tbody tr.empty-row { display: none !important; }
 
     /* hide empty patient fields */
     .patient-field.field-empty { display: none !important; }
 
-    /* hide sections where all rows are empty */
+    /* hide entire section when all its rows are empty */
     .section.all-empty { display: none !important; }
+
+    /* hide subsection block when all its rows are empty */
     .subsection-block.all-empty { display: none !important; }
+
+    /* hide thead of any table with no filled rows */
+    table.table-empty { display: none !important; }
+    table.table-empty thead { display: none !important; }
 
     .result-input {
       border: none;
@@ -274,9 +297,7 @@
       font-size: 12px;
     }
 
-    .field-input {
-      border-bottom-color: #aaa;
-    }
+    .field-input { border-bottom-color: #aaa; }
 
     tbody tr:nth-child(even) { background: #f7f9fc; }
   }
@@ -897,64 +918,55 @@
   <!-- FOOTER -->
   <div class="report-footer">
     <div class="footer-note">Clinical correlation is advised. Results should be interpreted in conjunction with the patient's clinical history.</div>
-    <div class="sig-block">
-      <div style="font-size:10px;color:var(--muted);">Authorized Signatory</div>
-      <div class="sig-line">Pathologist / Lab In-charge</div>
-    </div>
+
   </div>
 
 </div>
 
 <script>
-  // ── Mark/unmark a patient field as filled ──
+  // ── Mark/unmark a patient field as filled — hides on screen when blank ──
   function markField(wrapId, inputId) {
     const val = document.getElementById(inputId).value.trim();
     const wrap = document.getElementById(wrapId);
-    if (val) {
-      wrap.classList.remove('field-empty');
-    } else {
-      wrap.classList.add('field-empty');
-    }
+    wrap.classList.toggle('field-empty', val === '');
   }
 
   // ── When a result input changes, update row + section visibility ──
   function handleResult(input) {
     const row = input.closest('tr');
     const val = input.value.trim();
-
-    if (val) {
-      row.classList.remove('empty-row');
-    } else {
-      row.classList.add('empty-row');
-    }
-
+    row.classList.toggle('empty-row', val === '');
     updateSectionVisibility();
   }
 
-  // ── Hide section/subsection headers when all their rows are empty ──
+  // ── Hide section/subsection when all their data rows are empty ──
   function updateSectionVisibility() {
+    // Mark each table as empty if it has zero filled rows
+    document.querySelectorAll('table').forEach(table => {
+      const filled = table.querySelectorAll('tbody tr:not(.empty-row)').length;
+      table.classList.toggle('table-empty', filled === 0);
+    });
+
     // Subsection blocks
     document.querySelectorAll('.subsection-block').forEach(block => {
-      const filled = block.querySelectorAll('tr:not(.empty-row)').length;
+      const filled = block.querySelectorAll('tbody tr:not(.empty-row)').length;
       block.classList.toggle('all-empty', filled === 0);
     });
 
     // Top-level sections
     document.querySelectorAll('.section').forEach(sec => {
-      const filled = sec.querySelectorAll('tr:not(.empty-row)').length;
+      const filled = sec.querySelectorAll('tbody tr:not(.empty-row)').length;
       sec.classList.toggle('all-empty', filled === 0);
     });
   }
 
-  // ── Print: temporarily hide empty rows & blank patient fields ──
+  // ── Print ──
   function printReport() {
-    // Mark patient fields
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
       const inp = wrap.querySelector('input');
       wrap.classList.toggle('field-empty', inp.value.trim() === '');
     });
-
     updateSectionVisibility();
     window.print();
   }
@@ -962,12 +974,13 @@
   function clearAll() {
     document.querySelectorAll('.result-input').forEach(i => { i.value = ''; });
     document.querySelectorAll('.field-input').forEach(i => { i.value = ''; });
-    document.querySelectorAll('tr').forEach(r => r.classList.add('empty-row'));
-    document.querySelectorAll('.patient-field').forEach(p => p.classList.remove('field-empty'));
+    document.querySelectorAll('tbody tr').forEach(r => r.classList.add('empty-row'));
+    document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
     updateSectionVisibility();
   }
 
-  // Init: all rows start as empty
+  // ── On page load: mark all patient fields as empty, hide all empty sections ──
+  document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
   updateSectionVisibility();
 </script>
 </body>
