@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratory Report – MMC Pathology</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap');
+
+  :root {
+    --navy: #0f2744;
+    --teal: #0e7c7b;
+    --teal-light: #e6f4f4;
+    --gold: #b8860b;
+    --border: #c8d4e0;
+    --soft-bg: #f5f8fc;
+    --text: #1a2636;
+    --muted: #5a6b7e;
+    --white: #ffffff;
+    --abnormal: #8b1a1a;
+    --row-alt: #f0f5fb;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #e8edf4;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .page-wrapper {
+    max-width: 900px;
+    margin: 24px auto;
+    background: var(--white);
+    box-shadow: 0 4px 32px rgba(15,39,68,0.12);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .report-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 28px 36px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .lab-logo-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    border-right: 1px solid rgba(255,255,255,0.2);
+    padding-right: 24px;
+  }
+
+  .lab-emblem {
+    width: 56px;
+    height: 56px;
+    border: 2px solid var(--teal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+
+  .lab-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    letter-spacing: 0.3px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .lab-sub {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+  }
+
+  .lab-dept {
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-top: 2px;
+    text-align: center;
+  }
+
+  .header-fields {
+    padding-left: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 32px;
+    align-content: start;
+  }
+
+  .header-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .field-label {
+    font-size: 9px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    font-weight: 500;
+  }
+
+  .field-input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    padding: 2px 0;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field-input::placeholder { color: rgba(255,255,255,0.25); font-style: italic; }
+  .field-input:focus { border-bottom-color: var(--teal); }
+
+  /* ── ACCENT BAR ── */
+  .accent-bar {
+    height: 4px;
+    background: linear-gradient(90deg, var(--teal) 0%, var(--gold) 60%, var(--teal) 100%);
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 0;
+  }
+
+  .section-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 7px 36px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1px;
+  }
+
+  .section-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .subsection-header {
+    background: var(--teal-light);
+    color: var(--teal);
+    padding: 5px 36px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-left: 3px solid var(--teal);
+  }
+
+  /* ── TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: var(--soft-bg);
+    border-bottom: 2px solid var(--border);
+  }
+
+  thead th {
+    padding: 9px 36px 9px;
+    text-align: left;
+    font-size: 9.5px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  thead th.col-result { text-align: center; }
+  thead th.col-unit { text-align: center; }
+
+  tbody tr {
+    border-bottom: 1px solid #e8eef5;
+    transition: background 0.1s;
+  }
+
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr:hover { background: #dceeff44; }
+
+  tbody td {
+    padding: 8px 36px;
+    vertical-align: middle;
+  }
+
+  .col-test { font-weight: 500; color: var(--text); min-width: 200px; }
+  .col-result { text-align: center; min-width: 120px; }
+  .col-unit { text-align: center; color: var(--muted); font-size: 11.5px; min-width: 90px; }
+  .col-range { color: var(--muted); font-size: 11.5px; min-width: 220px; line-height: 1.6; }
+
+  .result-input {
+    width: 90px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 8px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .result-input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(14,124,123,0.15);
+  }
+
+  /* ── FOOTER ── */
+  .report-footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.55);
+    padding: 14px 36px;
+    font-size: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-top: 1px;
+  }
+
+  .footer-note { font-style: italic; }
+  .footer-sig { text-align: right; }
+  .sig-line {
+    border-top: 1px solid rgba(255,255,255,0.25);
+    padding-top: 4px;
+    margin-top: 24px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 12mm 12mm 14mm;
+    }
+
+    body {
+      background: white;
+      font-size: 11px;
+    }
+
+    .page-wrapper {
+      box-shadow: none;
+      margin: 0;
+      max-width: 100%;
+      border-radius: 0;
+    }
+
+    .field-input {
+      border-bottom-color: rgba(255,255,255,0.5);
+    }
+
+    .result-input {
+      border: none;
+      border-bottom: 1px solid #aaa;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    tbody tr:hover { background: inherit; }
+  }
+
+  @media (max-width: 680px) {
+    .report-header { grid-template-columns: 1fr; }
+    .lab-logo-block { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.2); padding-right: 0; padding-bottom: 16px; }
+    .header-fields { padding-left: 0; }
+    tbody td, thead th { padding-left: 16px; padding-right: 16px; }
+    .section-header, .subsection-header { padding-left: 16px; padding-right: 16px; }
+    .report-footer { padding: 14px 16px; flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="lab-logo-block">
+      <div class="lab-emblem">⚕</div>
+      <div class="lab-name">Mardan Medical<br>Complex</div>
+      <div class="lab-dept">Department of Pathology</div>
+      <div class="lab-sub">Laboratory Report</div>
+    </div>
+    <div class="header-fields">
+      <div class="header-field">
+        <span class="field-label">Patient Name</span>
+        <input class="field-input" type="text" placeholder="Enter name">
+      </div>
+      <div class="header-field">
+        <span class="field-label">MR / Registration No.</span>
+        <input class="field-input" type="text" placeholder="MMC-">
+      </div>
+      <div class="header-field">
+        <span class="field-label">Age / Sex</span>
+        <input class="field-input" type="text" placeholder="e.g. 28 Yrs / Male">
+      </div>
+      <div class="header-field">
+        <span class="field-label">Referring Doctor</span>
+        <input class="field-input" type="text" placeholder="Dr.">
+      </div>
+      <div class="header-field">
+        <span class="field-label">Collection Date</span>
+        <input class="field-input" type="text" placeholder="DD-MMM-YYYY">
+      </div>
+      <div class="header-field">
+        <span class="field-label">Report Date</span>
+        <input class="field-input" type="text" placeholder="DD-MMM-YYYY">
+      </div>
+    </div>
+  </div>
+  <div class="accent-bar"></div>
+
+  <!-- CHEMICAL PATHOLOGY -->
+  <div class="section">
+    <div class="section-header">Chemical Pathology</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">Random Blood Sugar</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">80 – 160 mg/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Serum Calcium</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">8.0 – 10.2 mg/dL</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RENAL PROFILE -->
+  <div class="section">
+    <div class="section-header">Renal Profile</div>
+    <div class="subsection-header">RFTs</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">Creatinine</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">0.7 – 1.2 mg/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Blood Urea</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">10 – 50 mg/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">HbA1c (% A1c WB)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">4.5 – 7.0 %</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- LIPID PROFILE -->
+  <div class="section">
+    <div class="section-header">Lipid Profile</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">Cholesterol</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">&lt;200 Desirable &nbsp;|&nbsp; 200–239 Borderline &nbsp;|&nbsp; ≥240 High</td>
+        </tr>
+        <tr>
+          <td class="col-test">HDL Cholesterol</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">35–60 Desirable &nbsp;|&nbsp; &lt;35 High Risk</td>
+        </tr>
+        <tr>
+          <td class="col-test">LDL Cholesterol</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">&lt;130 Desirable &nbsp;|&nbsp; 130–159 Borderline &nbsp;|&nbsp; ≥160 High</td>
+        </tr>
+        <tr>
+          <td class="col-test">Triglycerides</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">&lt;150 Desirable &nbsp;|&nbsp; 150–199 Borderline &nbsp;|&nbsp; 200–499 High &nbsp;|&nbsp; ≥500 Very High</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- LIVER FUNCTION TESTS -->
+  <div class="section">
+    <div class="section-header">Liver Function Tests (LFTs)</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">ALT (Alanine Aminotransferase)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">U/L</td>
+          <td class="col-range">5 – 55 U/L</td>
+        </tr>
+        <tr>
+          <td class="col-test">ALKP (Alkaline Phosphatase)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">U/L</td>
+          <td class="col-range">40 – 150 U/L</td>
+        </tr>
+        <tr>
+          <td class="col-test">Bilirubin Total (BILIT)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">0.2 – 1.2 mg/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Albumin (AlbG)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">g/dL</td>
+          <td class="col-range">3.5 – 5.2 g/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">GGT (Gamma Glutamyl Transferase)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">U/L</td>
+          <td class="col-range">9 – 64 U/L</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- HEMATOLOGY – ESR -->
+  <div class="section">
+    <div class="section-header">Hematology</div>
+    <div class="subsection-header">ESR</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">ESR</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mm/30 Min</td>
+          <td class="col-range">0 – 15</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-header">Blood CP / FBC / CBC – WBCs</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">WBC (White Blood Cells)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">4 – 11 × 10³/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Neutrophils (NEU)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">40 – 70 %</td>
+        </tr>
+        <tr>
+          <td class="col-test">Lymphocytes (LYM)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">20 – 40 %</td>
+        </tr>
+        <tr>
+          <td class="col-test">Monocytes (Mon)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">4 – 12 %</td>
+        </tr>
+        <tr>
+          <td class="col-test">Eosinophils (EOSI)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">2 – 6 %</td>
+        </tr>
+        <tr>
+          <td class="col-test">Basophils (BASO)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">0 – 1.7 %</td>
+        </tr>
+        <tr>
+          <td class="col-test">Abs. Neutrophils</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">2 – 7 × 10³/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Abs. Lymphocytes</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">1 – 3 × 10³/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Abs. Monocytes</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">0.24 – 0.79 × 10³/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Abs. Eosinophils</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">0.03 – 0.44 × 10³/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Abs. Basophils</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">0 – 0.80 × 10³/µL</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-header">RBCs</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">RBC (Red Blood Cells)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10⁶/µL</td>
+          <td class="col-range">4.0 – 5.3 × 10⁶/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Hemoglobin (HB)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">g/dL</td>
+          <td class="col-range">14 – 17 g/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">HCT / PCV (Hematocrit)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">%</td>
+          <td class="col-range">33 – 43 %</td>
+        </tr>
+        <tr>
+          <td class="col-test">MCV (Mean Corpuscular Volume)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">fL</td>
+          <td class="col-range">76 – 90 fL</td>
+        </tr>
+        <tr>
+          <td class="col-test">MCH (Mean Corpuscular Hemoglobin)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">pg</td>
+          <td class="col-range">25 – 31 pg</td>
+        </tr>
+        <tr>
+          <td class="col-test">MCHC (Mean Corpuscular Hgb Conc.)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">g/dL</td>
+          <td class="col-range">30 – 35 g/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">RDW (Red Cell Distribution Width)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">g/dL</td>
+          <td class="col-range">11.5 – 12.5 g/dL</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-header">Platelets</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">PLT (Platelet Count)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">10³/µL</td>
+          <td class="col-range">150 – 400 × 10³/µL</td>
+        </tr>
+        <tr>
+          <td class="col-test">MPV (Mean Platelet Volume)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">fL</td>
+          <td class="col-range">7 – 11 fL</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- IMMUNE CHEMISTRY -->
+  <div class="section">
+    <div class="section-header">Immune Chemistry</div>
+    <table>
+      <thead>
+        <tr>
+          <th class="col-test">Test Name</th>
+          <th class="col-result">Result</th>
+          <th class="col-unit">Unit</th>
+          <th class="col-range">Reference Range</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-test">Vitamin B12</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">pg/mL</td>
+          <td class="col-range">200 – 900 pg/mL</td>
+        </tr>
+        <tr>
+          <td class="col-test">TT4 (Total Thyroxine)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">µg/dL</td>
+          <td class="col-range">4.87 – 11.72 µg/dL</td>
+        </tr>
+        <tr>
+          <td class="col-test">TT3 (Total Triiodothyronine)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">ng/mL</td>
+          <td class="col-range">0.35 – 1.93 ng/mL</td>
+        </tr>
+        <tr>
+          <td class="col-test">TSH (Thyroid Stimulating Hormone)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">µIU/mL</td>
+          <td class="col-range">0.35 – 4.94 µIU/mL</td>
+        </tr>
+        <tr>
+          <td class="col-test">Prolactin</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">ng/mL</td>
+          <td class="col-range">Male: 3.46 – 19.40 &nbsp;|&nbsp; Female: 5.18 – 26.53 ng/mL</td>
+        </tr>
+        <tr>
+          <td class="col-test">LH (Luteinizing Hormone)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mIU/mL</td>
+          <td class="col-range">Male: 0.57–12.07 &nbsp;|&nbsp; F Follicular: 1.80–11.78 &nbsp;|&nbsp; F Mid-cycle: 7.59–89.08 &nbsp;|&nbsp; F Luteal: 0.56–14.00 &nbsp;|&nbsp; F Post-menopausal: 16–61.99</td>
+        </tr>
+        <tr>
+          <td class="col-test">FSH (Follicle Stimulating Hormone)</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">mIU/mL</td>
+          <td class="col-range">Follicular: 1.4–9.9 &nbsp;|&nbsp; Ovulatory Peak: 6.2–17.2 &nbsp;|&nbsp; Luteal: 1.1–9.2</td>
+        </tr>
+        <tr>
+          <td class="col-test">Testosterone</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">ng/mL</td>
+          <td class="col-range">Male Adult: 2.50–9.50 &nbsp;|&nbsp; M 14–18 yr: 1.0–9.50 &nbsp;|&nbsp; M 10–14 yr: 0.10–5.0 &nbsp;|&nbsp; Female Adult: 0.10–0.90 &nbsp;|&nbsp; F 10–14 yr: 0.10–0.50</td>
+        </tr>
+        <tr>
+          <td class="col-test">Cortisol</td>
+          <td class="col-result"><input class="result-input" type="text"></td>
+          <td class="col-unit">µg/dL</td>
+          <td class="col-range">Before 10 AM: 3.7–19.4 &nbsp;|&nbsp; After 5 PM: 2.9–17.3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="report-footer">
+    <div class="footer-note">Clinical correlation is advised. Results should be interpreted in conjunction with the patient's clinical history.</div>
+    <div class="footer-sig">
+      <div>Authorized Signatory</div>
+      <div class="sig-line">Pathologist / Lab In-charge</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
