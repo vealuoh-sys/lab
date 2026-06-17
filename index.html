@@ -162,6 +162,10 @@
 
   thead th.col-result, thead th.col-unit { text-align: center; }
 
+  /* hidden thead — keeps column widths aligned without showing header text */
+  thead.hidden-thead { visibility: hidden; height: 0; }
+  thead.hidden-thead th { padding: 0; height: 0; border: none; line-height: 0; font-size: 0; }
+
   tbody tr { border-bottom: 1px solid #e8eef5; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
 
@@ -679,6 +683,12 @@
     <div class="subsection-block" id="sub-esr">
       <div class="subsection-header">ESR</div>
       <table>
+        <thead class="hidden-thead"><tr>
+          <th class="col-test"></th>
+          <th class="col-result"></th>
+          <th class="col-unit"></th>
+          <th class="col-range"></th>
+        </tr></thead>
         <tbody>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-esr">
             <td class="col-test">ESR</td>
@@ -773,6 +783,12 @@
     <div class="subsection-block" id="sub-rbc">
       <div class="subsection-header">RBCs</div>
       <table>
+        <thead class="hidden-thead"><tr>
+          <th class="col-test"></th>
+          <th class="col-result"></th>
+          <th class="col-unit"></th>
+          <th class="col-range"></th>
+        </tr></thead>
         <tbody>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-rbc">
             <td class="col-test">RBC (Red Blood Cells)</td>
@@ -823,6 +839,12 @@
     <div class="subsection-block" id="sub-plt">
       <div class="subsection-header">Platelets</div>
       <table>
+        <thead class="hidden-thead"><tr>
+          <th class="col-test"></th>
+          <th class="col-result"></th>
+          <th class="col-unit"></th>
+          <th class="col-range"></th>
+        </tr></thead>
         <tbody>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-plt">
             <td class="col-test">PLT (Platelet Count)</td>
