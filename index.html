@@ -218,6 +218,36 @@
     box-shadow: 0 0 0 2px rgba(14,124,123,0.15);
   }
 
+  /* Positive / Negative dropdown for serology */
+  .result-select {
+    width: 110px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 6px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    background: var(--white);
+    outline: none;
+    cursor: pointer;
+    display: block;
+    margin: 0 auto;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    text-align-last: center;
+  }
+
+  .result-select:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(14,124,123,0.15);
+  }
+
+  .result-select.positive { color: #8b1a1a; border-color: #e0a0a0; background: #fff5f5; }
+  .result-select.negative { color: #0e5e2e; border-color: #a0d4b0; background: #f0fff5; }
+
   /* ── TOOLBAR ── */
   .toolbar {
     padding: 14px 36px;
@@ -400,6 +430,18 @@
       font-weight: 700;
     }
 
+    .result-select {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      font-size: 10px;
+      width: 90px;
+      padding: 1px 4px;
+      font-weight: 700;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
     .field-input { border-bottom-color: #aaa; }
 
     tbody tr:nth-child(even) { background: #f7f9fc; }
@@ -476,16 +518,22 @@
       </tr></thead>
       <tbody>
         <tr class="empty-row" data-section="sec-chem">
+          <td class="col-test">Glucose (Fasting)</td>
+          <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+          <td class="col-unit">mg/dL</td>
+          <td class="col-range">70 – 110 mg/dL</td>
+        </tr>
+        <tr class="empty-row" data-section="sec-chem">
           <td class="col-test">Random Blood Sugar</td>
           <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
           <td class="col-unit">mg/dL</td>
           <td class="col-range">80 – 160 mg/dL</td>
         </tr>
         <tr class="empty-row" data-section="sec-chem">
-          <td class="col-test">Glucose (Fasting)</td>
+          <td class="col-test">HbA1c (% A1c WB)</td>
           <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
-          <td class="col-unit">mg/dL</td>
-          <td class="col-range">70 – 110 mg/dL</td>
+          <td class="col-unit">%</td>
+          <td class="col-range">4.5 – 7.0 %</td>
         </tr>
         <tr class="empty-row" data-section="sec-chem">
           <td class="col-test">Serum Calcium</td>
@@ -534,12 +582,7 @@
             <td class="col-unit">mg/dL</td>
             <td class="col-range">10 – 50 mg/dL</td>
           </tr>
-          <tr class="empty-row" data-section="sec-renal" data-sub="sub-rfts">
-            <td class="col-test">HbA1c (% A1c WB)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
-            <td class="col-unit">%</td>
-            <td class="col-range">4.5 – 7.0 %</td>
-          </tr>
+
         </tbody>
       </table>
     </div>
@@ -1031,6 +1074,93 @@
     </table>
   </div>
 
+  <!-- ══ SEROLOGY ══ -->
+  <div class="section" id="sec-serology">
+    <div class="section-header">Serology</div>
+    <table>
+      <thead><tr>
+        <th class="col-test">Test Name</th>
+        <th class="col-result">Result</th>
+        <th class="col-unit">Unit</th>
+        <th class="col-range">Reference Range</th>
+      </tr></thead>
+      <tbody>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">HBs Ag (ICT)</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Negative">Negative</option>
+              <option value="Positive">Positive</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">HCV (ICT)</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Negative">Negative</option>
+              <option value="Positive">Positive</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">HIV (ICT)</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Negative">Negative</option>
+              <option value="Positive">Positive</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">Typhidot IgM</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Negative">Negative</option>
+              <option value="Positive">Positive</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">Typhidot IgG</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Negative">Negative</option>
+              <option value="Positive">Positive</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">Urine Pregnancy Test</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Negative">Negative</option>
+              <option value="Positive">Positive</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   <!-- FOOTER -->
   <div class="report-footer">
     <div class="footer-note">Clinical correlation is advised. Results should be interpreted in conjunction with the patient's clinical history.</div>
@@ -1052,6 +1182,18 @@
     const row = input.closest('tr');
     const val = input.value.trim();
     row.classList.toggle('empty-row', val === '');
+    updateSectionVisibility();
+  }
+
+  // ── When a Positive/Negative dropdown changes ──
+  function handleSelect(sel) {
+    const row = sel.closest('tr');
+    const val = sel.value;
+    row.classList.toggle('empty-row', val === '');
+    // Color coding
+    sel.classList.remove('positive', 'negative');
+    if (val === 'Positive') sel.classList.add('positive');
+    if (val === 'Negative') sel.classList.add('negative');
     updateSectionVisibility();
   }
 
@@ -1089,6 +1231,10 @@
 
   function clearAll() {
     document.querySelectorAll('.result-input').forEach(i => { i.value = ''; });
+    document.querySelectorAll('.result-select').forEach(s => {
+      s.value = '';
+      s.classList.remove('positive', 'negative');
+    });
     document.querySelectorAll('.field-input').forEach(i => { i.value = ''; });
     document.querySelectorAll('tbody tr').forEach(r => r.classList.add('empty-row'));
     document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
