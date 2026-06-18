@@ -295,6 +295,73 @@
     margin-left: auto;
   }
 
+  .storage-panel {
+    padding: 12px 36px 14px;
+    background: #fbfdff;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .storage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .storage-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+
+  .storage-status {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .saved-reports {
+    display: grid;
+    gap: 6px;
+  }
+
+  .saved-report-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--white);
+  }
+
+  .saved-report-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .saved-report-meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 10.5px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .saved-report-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-small {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
   /* ── FOOTER ── */
   .report-footer {
     border-top: 2px solid var(--navy);
@@ -322,9 +389,15 @@
 
   /* ── PRINT ── */
   @media print {
-    @page { size: A4 portrait; margin: 6mm 10mm 8mm; }
+    @page { size: A4 portrait; margin: 0; }
 
-    body { background: white; font-size: 10px; line-height: 1.34; }
+    body {
+      background: transparent;
+      color: #1d1d1d;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      line-height: 1.28;
+    }
 
     .page-wrapper {
       box-shadow: none;
@@ -332,78 +405,162 @@
       max-width: 100%;
       border-radius: 0;
       overflow: visible;
-      padding-top: 34mm;
+      background: transparent;
+      padding: 101mm 14mm 24mm;
     }
 
     .toolbar { display: none !important; }
+    .storage-panel { display: none !important; }
 
     .patient-header {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 68mm;
+      left: 14mm;
+      right: 14mm;
       z-index: 10;
-      padding: 5mm 10mm 3mm;
-      background: white;
-      border-bottom: 1.5px solid var(--navy);
+      padding: 0;
+      background: transparent;
+      border-top: 1px solid #cfcfcf;
+      border-bottom: none;
     }
 
-    .patient-header-title {
-      margin-bottom: 2.5mm;
-      font-size: 8px;
-      letter-spacing: 1.4px;
-    }
+    .patient-header-title { display: none; }
 
     .patient-fields-grid {
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 2.5mm 8mm;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      column-gap: 34mm;
+      row-gap: 1.4mm;
+      padding-top: 3mm;
     }
 
-    .field-label { font-size: 7.2px; letter-spacing: 0.8px; }
+    .patient-field {
+      display: grid;
+      grid-template-columns: 34mm 1fr;
+      align-items: baseline;
+      gap: 3mm;
+    }
+
+    #pf-mr { order: 1; }
+    #pf-col { order: 2; }
+    #pf-rep { order: 3; }
+    #pf-name { order: 4; }
+    #pf-age { order: 5; }
+    #pf-doc { order: 6; }
+
+    .field-label {
+      color: #111;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: nowrap;
+    }
 
     .field-input {
-      font-size: 9px;
-      padding: 1px 0;
-      min-height: 14px;
+      border: none;
+      color: #252525;
+      font-size: 11px;
+      font-weight: 500;
+      min-height: 13px;
+      padding: 0;
     }
 
     .accent-bar { display: none; }
 
     .section-header {
-      padding: 3px 10mm;
-      font-size: 7.6px;
-      letter-spacing: 1.2px;
+      display: block;
+      margin: 0 0 2mm;
+      padding: 0;
+      background: transparent;
+      color: #222;
+      font-size: 13px;
+      font-style: italic;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-align: center;
+      text-decoration: underline;
       break-after: avoid;
       page-break-after: avoid;
     }
 
+    .section-header::after { display: none; }
+
     .subsection-header {
-      padding: 2px 10mm;
-      font-size: 7.4px;
-      letter-spacing: 1px;
+      margin: 0 0 2mm;
+      padding: 0;
+      background: transparent;
+      border-left: none;
+      color: #111;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-align: center;
+      text-transform: uppercase;
       break-after: avoid;
       page-break-after: avoid;
     }
 
     thead { display: table-header-group; }
 
-    thead th {
-      padding: 3px 10mm;
-      font-size: 7.2px;
-      letter-spacing: 0.8px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
 
-    tbody td { padding: 3.4px 10mm; }
+    thead tr {
+      background: transparent;
+      border-bottom: 1px solid #bdbdbd;
+    }
+
+    thead th {
+      padding: 1.8mm 0 1.4mm;
+      color: #222;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    tbody td {
+      padding: 1.45mm 0;
+      border-bottom: 1px solid #d8d8d8;
+      vertical-align: middle;
+    }
 
     tbody tr {
       break-inside: avoid;
       page-break-inside: avoid;
     }
 
-    .col-test { min-width: 150px; }
-    .col-result { min-width: 76px; }
-    .col-unit { min-width: 58px; font-size: 8.7px; }
-    .col-range { min-width: 170px; font-size: 8.4px; line-height: 1.3; }
+    .col-test {
+      width: 42%;
+      min-width: 0;
+      padding-left: 2mm;
+      color: #222;
+      font-weight: 500;
+    }
+    .col-result {
+      width: 18%;
+      min-width: 0;
+      text-align: center;
+    }
+    .col-unit {
+      width: 17%;
+      min-width: 0;
+      color: #222;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .col-range {
+      width: 23%;
+      min-width: 0;
+      color: #222;
+      font-size: 10.2px;
+      line-height: 1.25;
+      text-align: right;
+    }
 
     #sec-hema,
     #sub-wbc,
@@ -414,11 +571,11 @@
     }
 
     #sec-hema .section-header,
-    #sec-hema .subsection-header { padding-top: 1.5px; padding-bottom: 1.5px; }
+    #sec-hema .subsection-header { margin-bottom: 1.3mm; }
 
-    #sec-hema thead th { padding-top: 2px; padding-bottom: 2px; }
-    #sec-hema tbody td { padding-top: 2.2px; padding-bottom: 2.2px; }
-    #sec-hema .col-range { line-height: 1.24; }
+    #sec-hema thead th { padding-top: 1.2mm; padding-bottom: 1.1mm; }
+    #sec-hema tbody td { padding-top: 1.15mm; padding-bottom: 1.15mm; }
+    #sec-hema .col-range { line-height: 1.18; }
 
     /* hide empty data rows */
     tbody tr.empty-row { display: none !important; }
@@ -443,9 +600,10 @@
       border: none;
       border-radius: 0;
       background: transparent;
-      font-size: 10px;
-      width: 82px;
-      padding: 1px 6px;
+      color: #111;
+      font-size: 11px;
+      width: 100%;
+      padding: 0;
       font-weight: 700;
     }
 
@@ -453,24 +611,29 @@
       border: none;
       border-radius: 0;
       background: transparent;
-      font-size: 10px;
-      width: 90px;
-      padding: 1px 4px;
+      color: #111 !important;
+      font-size: 11px;
+      width: 100%;
+      padding: 0;
       font-weight: 700;
       appearance: none;
       -webkit-appearance: none;
     }
 
-    .field-input { border-bottom-color: #aaa; }
+    .field-input { border-bottom-color: transparent; }
 
-    tbody tr:nth-child(even) { background: #f7f9fc; }
+    tbody tr:nth-child(even) { background: transparent; }
 
     .report-footer {
-      padding: 6px 10mm;
-      font-size: 8px;
+      border-top: none;
+      padding: 6mm 0 0;
+      font-size: 10px;
+      color: #222;
       break-inside: avoid;
       page-break-inside: avoid;
     }
+
+    .footer-note { max-width: none; }
   }
 
   @media (max-width: 680px) {
@@ -489,8 +652,17 @@
   <!-- TOOLBAR (hidden on print) -->
   <div class="toolbar">
     <button class="btn btn-primary" onclick="printReport()">🖨 Print / Save PDF</button>
+    <button class="btn btn-secondary" onclick="saveReport()">Save Report</button>
     <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
     <span class="toolbar-note">Only filled tests &amp; patient fields will appear in print.</span>
+  </div>
+
+  <div class="storage-panel">
+    <div class="storage-header">
+      <div class="storage-title">Saved Reports</div>
+      <div class="storage-status" id="storage-status">0 / 10 saved</div>
+    </div>
+    <div class="saved-reports" id="saved-reports"></div>
   </div>
 
   <!-- PATIENT INFO -->
@@ -1135,6 +1307,31 @@
           <td class="col-range"></td>
         </tr>
         <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">Blood Group</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="O">O</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">RH Factor</td>
+          <td class="col-result">
+            <select class="result-select" onchange="handleSelect(this)">
+              <option value="">— Select —</option>
+              <option value="Positive">Positive</option>
+              <option value="Negative">Negative</option>
+            </select>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
           <td class="col-test">Typhidot IgM</td>
           <td class="col-result">
             <select class="result-select" onchange="handleSelect(this)">
@@ -1183,6 +1380,10 @@
 </div>
 
 <script>
+  const STORAGE_KEY = 'mmc_lab_saved_reports_v1';
+  const MAX_SAVED_REPORTS = 10;
+  let editingReportId = null;
+
   // ── Mark/unmark a patient field as filled — hides on screen when blank ──
   function markField(wrapId, inputId) {
     const val = document.getElementById(inputId).value.trim();
@@ -1244,6 +1445,145 @@
   }
 
   // ── Print ──
+  function getSavedReports() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function setSavedReports(reports) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports.slice(0, MAX_SAVED_REPORTS)));
+  }
+
+  function collectReportData() {
+    return {
+      patient: Array.from(document.querySelectorAll('.field-input')).map(input => input.value),
+      results: Array.from(document.querySelectorAll('.result-input')).map(input => input.value),
+      selects: Array.from(document.querySelectorAll('.result-select')).map(select => select.value)
+    };
+  }
+
+  function applyReportData(data) {
+    document.querySelectorAll('.field-input').forEach((input, index) => {
+      input.value = data.patient?.[index] || '';
+      const wrap = input.closest('.patient-field');
+      if (wrap) wrap.classList.toggle('field-empty', input.value.trim() === '');
+    });
+
+    document.querySelectorAll('.result-input').forEach((input, index) => {
+      input.value = data.results?.[index] || '';
+      const row = input.closest('tr');
+      if (row) row.classList.toggle('empty-row', input.value.trim() === '');
+    });
+
+    document.querySelectorAll('.result-select').forEach((select, index) => {
+      select.value = data.selects?.[index] || '';
+      select.classList.remove('positive', 'negative');
+      if (select.value === 'Positive') select.classList.add('positive');
+      if (select.value === 'Negative') select.classList.add('negative');
+      const row = select.closest('tr');
+      if (row) row.classList.toggle('empty-row', select.value === '');
+    });
+
+    updateSectionVisibility();
+  }
+
+  function getReportLabel(data) {
+    const name = (data.patient?.[0] || '').trim();
+    const mr = (data.patient?.[1] || '').trim();
+    const date = (data.patient?.[5] || data.patient?.[4] || '').trim();
+    if (name && mr) return `${name} - ${mr}`;
+    if (name) return name;
+    if (mr) return mr;
+    if (date) return `Report ${date}`;
+    return 'Untitled report';
+  }
+
+  function saveReport() {
+    const data = collectReportData();
+    const reports = getSavedReports();
+    const now = new Date().toLocaleString();
+
+    if (editingReportId) {
+      const index = reports.findIndex(report => report.id === editingReportId);
+      if (index !== -1) {
+        reports[index] = { ...reports[index], label: getReportLabel(data), updatedAt: now, data };
+        setSavedReports(reports);
+        editingReportId = null;
+        renderSavedReports();
+        alert('Report updated.');
+        return;
+      }
+    }
+
+    reports.unshift({
+      id: Date.now().toString(),
+      label: getReportLabel(data),
+      createdAt: now,
+      updatedAt: now,
+      data
+    });
+    const removedOldest = reports.length > MAX_SAVED_REPORTS;
+    setSavedReports(reports);
+    renderSavedReports();
+    alert(removedOldest ? 'Report saved. Oldest report was removed to keep 10 reports.' : 'Report saved.');
+  }
+
+  function editSavedReport(id) {
+    const report = getSavedReports().find(item => item.id === id);
+    if (!report) return;
+    applyReportData(report.data);
+    editingReportId = id;
+    renderSavedReports();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function deleteSavedReport(id) {
+    const report = getSavedReports().find(item => item.id === id);
+    if (!report) return;
+    if (!confirm(`Delete saved report "${report.label}"?`)) return;
+    setSavedReports(getSavedReports().filter(item => item.id !== id));
+    if (editingReportId === id) editingReportId = null;
+    renderSavedReports();
+  }
+
+  function renderSavedReports() {
+    const reports = getSavedReports();
+    const list = document.getElementById('saved-reports');
+    const status = document.getElementById('storage-status');
+    if (!list || !status) return;
+
+    status.textContent = `${reports.length} / ${MAX_SAVED_REPORTS} saved`;
+    if (reports.length === 0) {
+      list.innerHTML = '<div class="storage-status">No saved reports yet.</div>';
+      return;
+    }
+
+    list.innerHTML = reports.map(report => `
+      <div class="saved-report-item">
+        <div>
+          <div class="saved-report-name">${escapeHtml(report.label)}${report.id === editingReportId ? ' (editing)' : ''}</div>
+          <span class="saved-report-meta">Saved: ${escapeHtml(report.updatedAt || report.createdAt || '')}</span>
+        </div>
+        <div class="saved-report-actions">
+          <button class="btn btn-secondary btn-small" onclick="editSavedReport('${report.id}')">Edit</button>
+          <button class="btn btn-secondary btn-small" onclick="deleteSavedReport('${report.id}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function printReport() {
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
@@ -1263,12 +1603,15 @@
     document.querySelectorAll('.field-input').forEach(i => { i.value = ''; });
     document.querySelectorAll('tbody tr').forEach(r => r.classList.add('empty-row'));
     document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
+    editingReportId = null;
+    renderSavedReports();
     updateSectionVisibility();
   }
 
   // ── On page load: mark all patient fields as empty, hide all empty sections ──
   document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
   updateSectionVisibility();
+  renderSavedReports();
 </script>
 </body>
 </html>
