@@ -301,6 +301,8 @@
     border-bottom: 1px solid var(--border);
   }
 
+  .storage-panel.storage-hidden { display: none; }
+
   .storage-header {
     display: flex;
     align-items: center;
@@ -653,11 +655,12 @@
   <div class="toolbar">
     <button class="btn btn-primary" onclick="printReport()">🖨 Print / Save PDF</button>
     <button class="btn btn-secondary" onclick="saveReport()">Save Report</button>
+    <button class="btn btn-secondary" id="toggle-storage-btn" onclick="toggleSavedReports()">Show Saved Reports</button>
     <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
     <span class="toolbar-note">Only filled tests &amp; patient fields will appear in print.</span>
   </div>
 
-  <div class="storage-panel">
+  <div class="storage-panel storage-hidden" id="storage-panel">
     <div class="storage-header">
       <div class="storage-title">Saved Reports</div>
       <div class="storage-status" id="storage-status">0 / 10 saved</div>
@@ -1536,7 +1539,7 @@
     if (!report) return;
     applyReportData(report.data);
     editingReportId = id;
-    renderSavedReports();
+    toggleSavedReports(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1547,6 +1550,20 @@
     setSavedReports(getSavedReports().filter(item => item.id !== id));
     if (editingReportId === id) editingReportId = null;
     renderSavedReports();
+  }
+
+  function toggleSavedReports(forceOpen) {
+    const panel = document.getElementById('storage-panel');
+    const button = document.getElementById('toggle-storage-btn');
+    if (!panel || !button) return;
+
+    const shouldOpen = typeof forceOpen === 'boolean'
+      ? forceOpen
+      : panel.classList.contains('storage-hidden');
+
+    panel.classList.toggle('storage-hidden', !shouldOpen);
+    button.textContent = shouldOpen ? 'Hide Saved Reports' : 'Show Saved Reports';
+    if (shouldOpen) renderSavedReports();
   }
 
   function renderSavedReports() {
