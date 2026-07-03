@@ -444,7 +444,7 @@
        padding on a normal flowed box), it now correctly repeats on
        page 2, 3, etc. too. */
     .print-shell-head {
-      padding-top: 35mm;
+      padding-top: 22mm;
     }
 
     .patient-header {
@@ -1733,6 +1733,8 @@
       .replace(/'/g, '&#039;');
   }
 
+  let removedPrintRows = [];
+
   function printReport() {
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
@@ -1740,8 +1742,28 @@
       wrap.classList.toggle('field-empty', inp.value.trim() === '');
     });
     updateSectionVisibility();
+
+    // Physically remove empty-section rows from the DOM right before
+    // printing, instead of relying only on print-time CSS display:none.
+    // Some browsers render display:none unreliably for content nested
+    // inside a table that also uses a repeating <thead> across pages —
+    // removing the nodes outright leaves nothing ambiguous to render.
+    // They're restored immediately after the print dialog closes.
+    removedPrintRows = [];
+    document.querySelectorAll('tr.print-shell-row.row-empty').forEach(row => {
+      removedPrintRows.push({ node: row, next: row.nextSibling, parent: row.parentNode });
+      row.parentNode.removeChild(row);
+    });
+
     window.print();
   }
+
+  window.addEventListener('afterprint', () => {
+    removedPrintRows.forEach(({ node, next, parent }) => {
+      parent.insertBefore(node, next);
+    });
+    removedPrintRows = [];
+  });
 
   function clearAll() {
     document.querySelectorAll('.result-input').forEach(i => { i.value = ''; });
