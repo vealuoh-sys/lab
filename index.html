@@ -95,6 +95,14 @@
     background: linear-gradient(90deg, var(--navy) 0%, var(--teal) 50%, var(--navy) 100%);
   }
 
+  /* Wrapper table that makes the patient header repeat on every printed
+     page (see @media print below). On screen it should be invisible as
+     a table — just stack normally like plain divs. */
+  .print-shell { width: 100%; border-collapse: collapse; }
+  .print-shell-head, .print-shell-body { padding: 0; border: none; text-align: left; }
+  .print-shell thead tr,
+  .print-shell tbody tr { background: transparent; border-bottom: none; }
+
   /* ── SECTION ── */
   .section { margin-bottom: 0; }
 
@@ -401,16 +409,12 @@
 
   /* ── PRINT ── */
   @media print {
-    /* Reserved space is now defined on the PAGE itself (not as element
-       padding), because @page margins are re-applied on every printed
-       page, whereas element padding is only applied once at the very
-       top/bottom of the whole flowed content. This is what was causing
-       the patient-info bar (position: fixed, repeats every page) to
-       land in the middle of page 2+, on top of the results — page 1 had
-       the 101mm gap reserved (via padding) but continuation pages did
-       not, so the fixed header overlapped whatever content had already
-       started flowing at the top of that page. */
-    @page { size: A4 portrait; margin: 101mm 14mm 24mm 14mm; }
+    /* Side/bottom margins repeat on every page automatically via @page.
+       Top space is instead reserved by the repeating <thead> itself
+       (see .print-shell-head below) — that's what makes it correctly
+       repeat on every page, including the letterhead gap, without any
+       position:fixed guesswork. */
+    @page { size: A4 portrait; margin: 0 14mm 24mm 14mm; }
 
     body {
       background: transparent;
@@ -433,12 +437,19 @@
     .toolbar { display: none !important; }
     .storage-panel { display: none !important; }
 
+    /* This cell IS the <thead> of the print-shell table, so it reprints
+       at the top of every page automatically. The padding-top below is
+       the blank gap reserved for your pre-printed letterhead stationery
+       — because it lives on a genuinely repeating element (not just
+       padding on a normal flowed box), it now correctly repeats on
+       page 2, 3, etc. too. */
+    .print-shell-head {
+      padding-top: 68mm;
+    }
+
     .patient-header {
-      position: fixed;
-      top: 68mm;
-      left: 14mm;
-      right: 14mm;
-      z-index: 10;
+      position: static;
+      z-index: auto;
       padding: 0;
       background: transparent;
       border-top: 1px solid #cfcfcf;
@@ -553,6 +564,14 @@
     tbody tr {
       break-inside: avoid;
       page-break-inside: avoid;
+    }
+
+    /* This row just holds the entire report body — unlike ordinary data
+       rows it MUST be allowed to break across pages, or the browser
+       would try to keep the whole report on one page. */
+    tr.print-shell-row {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
     }
 
     .col-test {
@@ -689,6 +708,14 @@
     <div class="saved-reports" id="saved-reports"></div>
   </div>
 
+  <!-- The whole report below is wrapped in a single table whose <thead>
+       holds the patient-info bar. Repeating a <thead> on every printed
+       page is native, guaranteed browser behavior (unlike position:fixed
+       combined with @page margins, which is unreliable) — so the patient
+       details will now correctly repeat at the TOP of every page. -->
+  <table class="print-shell">
+  <thead><tr><td class="print-shell-head">
+
   <!-- PATIENT INFO -->
   <div class="patient-header">
     <div class="patient-header-title">Patient Information</div>
@@ -720,6 +747,9 @@
     </div>
   </div>
   <div class="accent-bar"></div>
+
+  </td></tr></thead>
+  <tbody><tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ CHEMICAL PATHOLOGY ══ -->
   <div class="section" id="sec-chem">
@@ -1411,6 +1441,9 @@
     <div class="footer-note">Clinical correlation is advised. Results should be interpreted in conjunction with the patient's clinical history.</div>
 
   </div>
+
+  </td></tr></tbody>
+  </table>
 
 </div>
 
