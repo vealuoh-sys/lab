@@ -261,8 +261,18 @@
     box-shadow: 0 0 0 2px rgba(14,124,123,0.15);
   }
 
-  .result-select.positive { color: #8b1a1a; border-color: #e0a0a0; background: #fff5f5; }
-  .result-select.negative { color: #0e5e2e; border-color: #a0d4b0; background: #f0fff5; }
+  .result-select.positive, .result-input.positive { color: #8b1a1a; border-color: #e0a0a0; background: #fff5f5; }
+  .result-select.negative, .result-input.negative { color: #0e5e2e; border-color: #a0d4b0; background: #f0fff5; }
+
+  /* Malarial Parasite field: looks/behaves like the Negative/Positive
+     dropdowns (shows a "Negative" suggestion via native datalist) but
+     stays a free-text field so a positive result can be typed in
+     manually (e.g. species / parasite stage / count). */
+  .result-input.result-combo {
+    width: 150px;
+    text-align: center;
+    cursor: text;
+  }
 
   /* ── TOOLBAR ── */
   .toolbar {
@@ -391,7 +401,16 @@
 
   /* ── PRINT ── */
   @media print {
-    @page { size: A4 portrait; margin: 0; }
+    /* Reserved space is now defined on the PAGE itself (not as element
+       padding), because @page margins are re-applied on every printed
+       page, whereas element padding is only applied once at the very
+       top/bottom of the whole flowed content. This is what was causing
+       the patient-info bar (position: fixed, repeats every page) to
+       land in the middle of page 2+, on top of the results — page 1 had
+       the 101mm gap reserved (via padding) but continuation pages did
+       not, so the fixed header overlapped whatever content had already
+       started flowing at the top of that page. */
+    @page { size: A4 portrait; margin: 101mm 14mm 24mm 14mm; }
 
     body {
       background: transparent;
@@ -408,7 +427,7 @@
       border-radius: 0;
       overflow: visible;
       background: transparent;
-      padding: 101mm 14mm 24mm;
+      padding: 0;
     }
 
     .toolbar { display: none !important; }
@@ -609,7 +628,8 @@
       font-weight: 700;
     }
 
-    .result-select {
+    .result-select,
+    .result-input.result-combo {
       border: none;
       border-radius: 0;
       background: transparent;
@@ -620,6 +640,7 @@
       font-weight: 700;
       appearance: none;
       -webkit-appearance: none;
+      text-align: center;
     }
 
     .field-input { border-bottom-color: transparent; }
@@ -1310,6 +1331,17 @@
           <td class="col-range"></td>
         </tr>
         <tr class="empty-row" data-section="sec-serology">
+          <td class="col-test">Malarial Parasite (MP)</td>
+          <td class="col-result">
+            <input class="result-input result-combo" type="text" list="malaria-options" placeholder="— Select / Type —" oninput="handleMalaria(this)">
+            <datalist id="malaria-options">
+              <option value="Negative"></option>
+            </datalist>
+          </td>
+          <td class="col-unit"></td>
+          <td class="col-range"></td>
+        </tr>
+        <tr class="empty-row" data-section="sec-serology">
           <td class="col-test">Blood Group</td>
           <td class="col-result">
             <select class="result-select" onchange="handleSelect(this)">
@@ -1402,6 +1434,22 @@
     updateSectionVisibility();
   }
 
+  // ── Malarial Parasite field: type "Negative" (or pick it from the
+  //    dropdown suggestion) for a negative result, or type findings
+  //    manually (e.g. species / stage) for a positive result ──
+  function handleMalaria(input) {
+    const row = input.closest('tr');
+    const val = input.value.trim();
+    row.classList.toggle('empty-row', val === '');
+    input.classList.remove('positive', 'negative');
+    if (val.toLowerCase() === 'negative') {
+      input.classList.add('negative');
+    } else if (val !== '') {
+      input.classList.add('positive');
+    }
+    updateSectionVisibility();
+  }
+
   // ── When a Positive/Negative dropdown changes ──
   function handleSelect(sel) {
     const row = sel.closest('tr');
@@ -1479,6 +1527,12 @@
       input.value = data.results?.[index] || '';
       const row = input.closest('tr');
       if (row) row.classList.toggle('empty-row', input.value.trim() === '');
+      input.classList.remove('positive', 'negative');
+      if (input.classList.contains('result-combo')) {
+        const val = input.value.trim().toLowerCase();
+        if (val === 'negative') input.classList.add('negative');
+        else if (val !== '') input.classList.add('positive');
+      }
     });
 
     document.querySelectorAll('.result-select').forEach((select, index) => {
