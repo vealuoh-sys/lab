@@ -1735,7 +1735,7 @@
 
   let removedPrintRows = [];
 
-  function printReport() {
+ function printReport() {
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
       const inp = wrap.querySelector('input');
@@ -1743,16 +1743,18 @@
     });
     updateSectionVisibility();
 
-    // Physically remove empty-section rows from the DOM right before
-    // printing, instead of relying only on print-time CSS display:none.
-    // Some browsers render display:none unreliably for content nested
-    // inside a table that also uses a repeating <thead> across pages —
-    // removing the nodes outright leaves nothing ambiguous to render.
-    // They're restored immediately after the print dialog closes.
+    // Reset the tracking array
     removedPrintRows = [];
-    document.querySelectorAll('tr.print-shell-row.row-empty').forEach(row => {
-      removedPrintRows.push({ node: row, next: row.nextSibling, parent: row.parentNode });
-      row.parentNode.removeChild(row);
+    
+    // Target the outer empty sections, the empty test rows, and the empty sub-headers
+    const emptyElements = document.querySelectorAll(
+      'tr.print-shell-row.row-empty, tr.empty-row, tr.sub-label-row.all-empty'
+    );
+
+    // Physically pull them out of the DOM so the browser cannot render them
+    emptyElements.forEach(node => {
+      removedPrintRows.push({ node: node, next: node.nextSibling, parent: node.parentNode });
+      node.parentNode.removeChild(node);
     });
 
     window.print();
