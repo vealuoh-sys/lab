@@ -1746,13 +1746,21 @@
     // Reset the tracking array
     removedPrintRows = [];
 
-    // Target ALL empty layout elements: entire empty sections, individual empty rows, and empty labels
+    // 1. Target the outer structural shell rows if they are empty
+    // 2. Target individual data rows, but ONLY if they are currently marked as empty
+    // 3. Target sub-label headers, but ONLY if they are currently marked as empty
     const targets = document.querySelectorAll(
       'tr.print-shell-row.row-empty, tr.empty-row, tr.sub-label-row.all-empty'
     );
 
-    // Physically pull them out of the DOM so the print engine cannot see or render them
+    // Filter to double check we ONLY remove items that are actively hidden/empty
     targets.forEach(node => {
+      // If it's a test row, verify it actually has the 'empty-row' class active
+      // (Your handleResult changes/removes this class dynamically, so this protects filled rows!)
+      if (node.classList.contains('print-shell-row') && !node.classList.contains('row-empty')) {
+        return; 
+      }
+      
       removedPrintRows.push({ node: node, next: node.nextSibling, parent: node.parentNode });
       node.parentNode.removeChild(node);
     });
