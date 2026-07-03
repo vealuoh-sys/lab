@@ -444,7 +444,7 @@
        padding on a normal flowed box), it now correctly repeats on
        page 2, 3, etc. too. */
     .print-shell-head {
-      padding-top: 68mm;
+      padding-top: 22mm;
     }
 
     .patient-header {
@@ -629,6 +629,13 @@
     /* hide entire section when all its rows are empty */
     .section.all-empty { display: none !important; }
 
+    /* Also hide the *row* that wraps an empty section. Hiding a whole
+       table row is the simplest, most reliably-supported operation for
+       a browser's print pagination engine — far more robust than
+       relying on hiding a div buried inside a cell that also has to
+       fragment across pages. */
+    tr.print-shell-row.row-empty { display: none !important; }
+
     /* hide subsection block when all its rows are empty */
     .subsection-block.all-empty { display: none !important; }
 
@@ -802,6 +809,9 @@
     </table>
   </div>
 
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
+
   <!-- ══ RENAL PROFILE ══ -->
   <div class="section" id="sec-renal">
     <div class="section-header">Renal Profile</div>
@@ -832,6 +842,9 @@
       </table>
     </div>
   </div>
+
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ LIPID PROFILE ══ -->
   <div class="section" id="sec-lipid">
@@ -871,6 +884,9 @@
       </tbody>
     </table>
   </div>
+
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ LIVER FUNCTION TESTS ══ -->
   <div class="section" id="sec-lft">
@@ -917,6 +933,9 @@
     </table>
   </div>
 
+
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ HEMATOLOGY ══ -->
   <div class="section" id="sec-hema">
@@ -1098,6 +1117,9 @@
 
   </div>
 
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
+
   <!-- ══ IMMUNE CHEMISTRY ══ -->
   <div class="section" id="sec-immune">
     <div class="section-header">Immune Chemistry</div>
@@ -1172,6 +1194,9 @@
       </tbody>
     </table>
   </div>
+
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ URINE RE ══ -->
   <div class="section" id="sec-urine">
@@ -1280,6 +1305,9 @@
     </div>
   </div>
 
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
+
   <!-- ══ ACR ══ -->
   <div class="section" id="sec-acr">
     <div class="section-header">ACR – Albumin Creatinine Ratio</div>
@@ -1312,6 +1340,9 @@
       </tbody>
     </table>
   </div>
+
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ SEROLOGY ══ -->
   <div class="section" id="sec-serology">
@@ -1436,6 +1467,9 @@
     </table>
   </div>
 
+  </td></tr>
+  <tr class="print-shell-row"><td class="print-shell-body">
+
   <!-- FOOTER -->
   <div class="report-footer">
     <div class="footer-note">Clinical correlation is advised. Results should be interpreted in conjunction with the patient's clinical history.</div>
@@ -1525,6 +1559,17 @@
     document.querySelectorAll('.section').forEach(sec => {
       const filled = sec.querySelectorAll('tbody tr:not(.empty-row):not(.sub-label-row)').length;
       sec.classList.toggle('all-empty', filled === 0);
+    });
+
+    // Each section (and the footer) now lives in its own print-shell
+    // row. Hide that whole row when everything inside it is empty, so
+    // print pagination only ever has to skip a row, never fragment
+    // hidden content inside a shared cell.
+    document.querySelectorAll('tr.print-shell-row').forEach(row => {
+      const hasVisibleSection = Array.from(row.querySelectorAll('.section'))
+        .some(sec => !sec.classList.contains('all-empty'));
+      const hasNonSectionContent = row.querySelectorAll('.section').length === 0;
+      row.classList.toggle('row-empty', !hasVisibleSection && !hasNonSectionContent);
     });
   }
 
