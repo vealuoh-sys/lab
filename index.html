@@ -1745,14 +1745,14 @@
 
     // Reset the tracking array
     removedPrintRows = [];
-    
-    // Target the outer empty sections, the empty test rows, and the empty sub-headers
-    const emptyElements = document.querySelectorAll(
+
+    // Target ALL empty layout elements: entire empty sections, individual empty rows, and empty labels
+    const targets = document.querySelectorAll(
       'tr.print-shell-row.row-empty, tr.empty-row, tr.sub-label-row.all-empty'
     );
 
-    // Physically pull them out of the DOM so the browser cannot render them
-    emptyElements.forEach(node => {
+    // Physically pull them out of the DOM so the print engine cannot see or render them
+    targets.forEach(node => {
       removedPrintRows.push({ node: node, next: node.nextSibling, parent: node.parentNode });
       node.parentNode.removeChild(node);
     });
