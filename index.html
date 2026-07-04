@@ -38,6 +38,8 @@
     overflow: hidden;
   }
 
+  #print-clone-container { display: none; }
+
   /* ── PATIENT INFO HEADER ── */
   .patient-header {
     padding: 20px 36px 16px;
@@ -400,14 +402,7 @@
 
   /* ── PRINT ── */
   @media print {
-    /* The original bug: this 101mm top gap was applied as element
-       PADDING, which print only honors on page 1 — so on page 2+ the
-       report content started right at the top of the page while the
-       fixed patient-header (which does correctly repeat every page)
-       still rendered 101mm down, landing on top of the results.
-       Fix: reserve the gap on the PAGE itself via @page margin, which
-       (unlike padding) is re-applied on every printed page. */
-    @page { size: A4 portrait; margin: 26mm 14mm 24mm 14mm; }
+    @page { size: A4 portrait; margin: 0 14mm 24mm 14mm; }
 
     body {
       background: transparent;
@@ -417,7 +412,16 @@
       line-height: 1.28;
     }
 
-    .page-wrapper {
+    /* The editable form is never printed — a disposable copy (built in
+       JS right before printing, see the beforeprint listener) is shown
+       instead. This is what lets empty sections be genuinely absent
+       from the print output rather than relying on print-time
+       display:none, and lets the header repeat via a real <thead>
+       instead of fragile position:fixed + @page margin math. */
+    #live-report { display: none !important; }
+
+    #print-clone-container {
+      display: block !important;
       box-shadow: none;
       margin: 0;
       max-width: 100%;
@@ -427,22 +431,27 @@
       padding: 0;
     }
 
+    .print-shell { width: 100%; border-collapse: collapse; }
+    .print-shell-head, .print-shell-body { padding: 0; border: none; text-align: left; }
+
+    /* Blank gap reserved at the top of every page — e.g. for
+       pre-printed letterhead stationery. This is one number to tweak;
+       it repeats correctly on every page because it's padding on the
+       table's <thead> cell, which is a genuinely repeating element. */
+    .print-shell-head { padding-top: 35mm; }
+
+    /* This row holds the ENTIRE report body — unlike ordinary data
+       rows it must be allowed to break across pages. */
+    tr.print-shell-row {
+      break-inside: auto !important;
+      page-break-inside: auto !important;
+    }
+
     .toolbar { display: none !important; }
     .storage-panel { display: none !important; }
 
-    /* Chrome positions "fixed" elements relative to the page's CONTENT
-       box (i.e. inside the @page margin) when a print @page margin is
-       set, not relative to the raw physical sheet. Since @page now
-       reserves 101mm/14mm/14mm at top/left/right, we counter that by
-       shifting this element back up/left by exactly that much, so it
-       still lands at the same physical spot (68mm from the true top)
-       on every page — this is what actually makes it repeat correctly. */
     .patient-header {
-      position: fixed;
-      top: -23mm;
-      left: 0;
-      right: 0;
-      z-index: 10;
+      position: static;
       padding: 0;
       background: transparent;
       border-top: 1px solid #cfcfcf;
@@ -472,6 +481,7 @@
     #pf-name { order: 4; }
     #pf-age { order: 5; }
     #pf-doc { order: 6; }
+
 
     .field-label {
       color: #111;
@@ -674,7 +684,7 @@
 </style>
 </head>
 <body>
-<div class="page-wrapper">
+<div class="page-wrapper" id="live-report">
 
   <!-- TOOLBAR (hidden on print) -->
   <div class="toolbar">
@@ -1418,6 +1428,16 @@
 
 </div>
 
+<!-- Populated fresh right before every print action (see beforeprint
+     listener below). Kept empty/hidden the rest of the time. Building a
+     disposable print-only copy — instead of hiding parts of the live
+     form with CSS — means: (a) empty sections are just never added, no
+     display:none ambiguity to fight with, (b) the header can use a
+     genuinely repeating <thead> instead of fragile fixed-position math,
+     and (c) the live, editable form is never touched, so there's
+     nothing to accidentally lose or need to restore afterward. -->
+<div class="page-wrapper" id="print-clone-container"></div>
+
 <script>
   const STORAGE_KEY = 'mmc_lab_saved_reports_v1';
   const MAX_SAVED_REPORTS = 10;
@@ -1659,13 +1679,95 @@
       .replace(/'/g, '&#039;');
   }
 
-  function printReport() {
+  function refreshEmptyState() {
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
       const inp = wrap.querySelector('input');
       wrap.classList.toggle('field-empty', inp.value.trim() === '');
     });
     updateSectionVisibility();
+  }
+
+  // Builds a disposable, print-only copy of the report with empty
+  // sections/subsections genuinely left out (not just CSS-hidden), and
+  // the header inside a repeating <thead>. Runs on the native
+  // `beforeprint` event, so it fires no matter how printing was
+  // started (this button, Ctrl+P, or the browser's own print menu) —
+  // and it's safe to run more than once, since it always rebuilds the
+  // clone from scratch and never touches the live, editable form.
+  function buildPrintClone() {
+    refreshEmptyState();
+
+    const live = document.getElementById('live-report');
+
+    // cloneNode(true) copies DOM ATTRIBUTES, not live JS properties —
+    // so a value the user typed (which only updates the .value
+    // property) wouldn't otherwise survive the clone. Sync it onto the
+    // attribute first so the clone reflects what's actually on screen.
+    live.querySelectorAll('input').forEach(inp => inp.setAttribute('value', inp.value));
+    live.querySelectorAll('select').forEach(sel => {
+      Array.from(sel.options).forEach(opt => {
+        opt.toggleAttribute('selected', opt.value === sel.value);
+      });
+    });
+
+    const patientHeader = live.querySelector('.patient-header').cloneNode(true);
+    const accentBar = live.querySelector('.accent-bar').cloneNode(true);
+    const footer = live.querySelector('.report-footer').cloneNode(true);
+
+    const visibleSections = Array.from(live.querySelectorAll(':scope > .section'))
+      .filter(sec => !sec.classList.contains('all-empty'))
+      .map(sec => {
+        const clone = sec.cloneNode(true);
+        // A section can be non-empty overall but still contain empty
+        // subsections/tables (e.g. Urine R/E with only one of its three
+        // sub-panels filled in) — strip those out individually too.
+        clone.querySelectorAll('.subsection-block.all-empty, table.table-empty').forEach(el => el.remove());
+        return clone;
+      });
+
+    // The clone never needs to be looked up by ID — strip IDs entirely
+    // so nothing in the live document (which uses getElementById in
+    // several places) can ever accidentally match a cloned copy instead
+    // of the real, editable element.
+    [patientHeader, accentBar, footer, ...visibleSections].forEach(node => {
+      if (node.hasAttribute && node.hasAttribute('id')) node.removeAttribute('id');
+      node.querySelectorAll && node.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    });
+
+    const table = document.createElement('table');
+    table.className = 'print-shell';
+
+    const thead = document.createElement('thead');
+    const theadRow = document.createElement('tr');
+    const theadCell = document.createElement('td');
+    theadCell.className = 'print-shell-head';
+    theadCell.appendChild(patientHeader);
+    theadCell.appendChild(accentBar);
+    theadRow.appendChild(theadCell);
+    thead.appendChild(theadRow);
+
+    const tbody = document.createElement('tbody');
+    const bodyRow = document.createElement('tr');
+    bodyRow.className = 'print-shell-row';
+    const bodyCell = document.createElement('td');
+    bodyCell.className = 'print-shell-body';
+    visibleSections.forEach(s => bodyCell.appendChild(s));
+    bodyCell.appendChild(footer);
+    bodyRow.appendChild(bodyCell);
+    tbody.appendChild(bodyRow);
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+
+    const container = document.getElementById('print-clone-container');
+    container.innerHTML = '';
+    container.appendChild(table);
+  }
+
+  window.addEventListener('beforeprint', buildPrintClone);
+
+  function printReport() {
     window.print();
   }
 
