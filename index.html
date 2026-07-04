@@ -1497,31 +1497,17 @@
   function handleResult(input) {
     const row = input.closest('tr');
     const val = input.value.trim();
-    
-    // Toggle state attributes
-    if (val === '') {
-      row.classList.add('empty-row');
-      row.setAttribute('data-empty', 'true');
-    } else {
-      row.classList.remove('empty-row');
-      row.removeAttribute('data-empty');
-    }
+    row.classList.toggle('empty-row', val === '');
     updateSectionVisibility();
   }
 
-  // ── Malarial Parasite field ──
+  // ── Malarial Parasite field: type "Negative" (or pick it from the
+  //    dropdown suggestion) for a negative result, or type findings
+  //    manually (e.g. species / stage) for a positive result ──
   function handleMalaria(input) {
     const row = input.closest('tr');
     const val = input.value.trim();
-    
-    if (val === '') {
-      row.classList.add('empty-row');
-      row.setAttribute('data-empty', 'true');
-    } else {
-      row.classList.remove('empty-row');
-      row.removeAttribute('data-empty');
-    }
-    
+    row.classList.toggle('empty-row', val === '');
     input.classList.remove('positive', 'negative');
     if (val.toLowerCase() === 'negative') {
       input.classList.add('negative');
@@ -1535,15 +1521,7 @@
   function handleSelect(sel) {
     const row = sel.closest('tr');
     const val = sel.value;
-    
-    if (val === '') {
-      row.classList.add('empty-row');
-      row.setAttribute('data-empty', 'true');
-    } else {
-      row.classList.remove('empty-row');
-      row.removeAttribute('data-empty');
-    }
-    
+    row.classList.toggle('empty-row', val === '');
     // Color coding
     sel.classList.remove('positive', 'negative');
     if (val === 'Positive') sel.classList.add('positive');
@@ -1559,9 +1537,12 @@
       table.classList.toggle('table-empty', filled === 0);
     });
 
-    // Subsection blocks
+    // Subsection blocks (old style + new sub-cbc)
     document.querySelectorAll('.subsection-block').forEach(block => {
       const id = block.id;
+      const filled = block.querySelectorAll(`tbody tr.empty-row[data-sub="${id}"]`).length;
+      const total  = block.querySelectorAll(`tbody tr.empty-row`).length +
+                     block.querySelectorAll(`tbody tr:not(.empty-row):not(.sub-label-row)`).length;
       const filledRows = block.querySelectorAll('tbody tr:not(.empty-row):not(.sub-label-row)').length;
       block.classList.toggle('all-empty', filledRows === 0);
     });
@@ -1580,7 +1561,10 @@
       sec.classList.toggle('all-empty', filled === 0);
     });
 
-    // Outer layout shell rows
+    // Each section (and the footer) now lives in its own print-shell
+    // row. Hide that whole row when everything inside it is empty, so
+    // print pagination only ever has to skip a row, never fragment
+    // hidden content inside a shared cell.
     document.querySelectorAll('tr.print-shell-row').forEach(row => {
       const hasVisibleSection = Array.from(row.querySelectorAll('.section'))
         .some(sec => !sec.classList.contains('all-empty'));
@@ -1589,7 +1573,7 @@
     });
   }
 
-  // ── Storage Mechanics ──
+  // ── Print ──
   function getSavedReports() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -1620,15 +1604,7 @@
     document.querySelectorAll('.result-input').forEach((input, index) => {
       input.value = data.results?.[index] || '';
       const row = input.closest('tr');
-      if (row) {
-        if (input.value.trim() === '') {
-          row.classList.add('empty-row');
-          row.setAttribute('data-empty', 'true');
-        } else {
-          row.classList.remove('empty-row');
-          row.removeAttribute('data-empty');
-        }
-      }
+      if (row) row.classList.toggle('empty-row', input.value.trim() === '');
       input.classList.remove('positive', 'negative');
       if (input.classList.contains('result-combo')) {
         const val = input.value.trim().toLowerCase();
@@ -1643,15 +1619,7 @@
       if (select.value === 'Positive') select.classList.add('positive');
       if (select.value === 'Negative') select.classList.add('negative');
       const row = select.closest('tr');
-      if (row) {
-        if (select.value === '') {
-          row.classList.add('empty-row');
-          row.setAttribute('data-empty', 'true');
-        } else {
-          row.classList.remove('empty-row');
-          row.removeAttribute('data-empty');
-        }
-      }
+      if (row) row.classList.toggle('empty-row', select.value === '');
     });
 
     updateSectionVisibility();
@@ -1765,11 +1733,17 @@
       .replace(/'/g, '&#039;');
   }
 
-  // ── Advanced Print Node Removal Fix ──
   let removedPrintRows = [];
 
   function printReport() {
-    // 1. Force state check for header properties
+    window.print();
+  }
+
+  // beforeprint/afterprint fire for EVERY print action — the in-page
+  // button, Ctrl+P, or the browser's own print menu — unlike a function
+  // tied only to a button click. This is what actually guarantees empty
+  // sections get stripped out no matter how printing was started.
+  window.addEventListener('beforeprint', () => {
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
       const inp = wrap.querySelector('input');
@@ -1777,33 +1751,22 @@
     });
     updateSectionVisibility();
 
+    // Physically remove empty-section rows from the DOM right before
+    // printing, instead of relying only on print-time CSS display:none.
+    // Some browsers render display:none unreliably for content nested
+    // inside a table that also uses a repeating <thead> across pages —
+    // removing the nodes outright leaves nothing ambiguous to render.
+    // They're restored immediately after the print dialog closes.
     removedPrintRows = [];
-
-    // 2. Select structural blocks and inline table headers that are genuinely empty
-    const structuralTargets = document.querySelectorAll(
-      'tr.print-shell-row.row-empty, tr.sub-label-row.all-empty'
-    );
-    structuralTargets.forEach(node => {
-      removedPrintRows.push({ node: node, next: node.nextSibling, parent: node.parentNode });
-      node.parentNode.removeChild(node);
+    document.querySelectorAll('tr.print-shell-row.row-empty').forEach(row => {
+      removedPrintRows.push({ node: row, next: row.nextSibling, parent: row.parentNode });
+      row.parentNode.removeChild(row);
     });
+  });
 
-    // 3. Select individual test rows that are explicitly marked as empty
-    const emptyDataRows = document.querySelectorAll('tbody tr[data-empty="true"]');
-    emptyDataRows.forEach(node => {
-      removedPrintRows.push({ node: node, next: node.nextSibling, parent: node.parentNode });
-      node.parentNode.removeChild(node);
-    });
-
-    window.print();
-  }
-
-  // Restore everything to screen cleanly after print
   window.addEventListener('afterprint', () => {
     removedPrintRows.forEach(({ node, next, parent }) => {
-      if (parent) {
-        parent.insertBefore(node, next);
-      }
+      parent.insertBefore(node, next);
     });
     removedPrintRows = [];
   });
@@ -1815,21 +1778,15 @@
       s.classList.remove('positive', 'negative');
     });
     document.querySelectorAll('.field-input').forEach(i => { i.value = ''; });
-    
-    // Reset defaults
-    document.querySelectorAll('tbody tr').forEach(r => {
-      r.classList.add('empty-row');
-      r.setAttribute('data-empty', 'true');
-    });
+    document.querySelectorAll('tbody tr').forEach(r => r.classList.add('empty-row'));
     document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
     editingReportId = null;
     renderSavedReports();
     updateSectionVisibility();
   }
 
-  // Initializing state markers on load
+  // ── On page load: mark all patient fields as empty, hide all empty sections ──
   document.querySelectorAll('.patient-field').forEach(p => p.classList.add('field-empty'));
-  document.querySelectorAll('tbody tr:not(.sub-label-row)').forEach(r => r.setAttribute('data-empty', 'true'));
   updateSectionVisibility();
   renderSavedReports();
 </script>
