@@ -95,14 +95,6 @@
     background: linear-gradient(90deg, var(--navy) 0%, var(--teal) 50%, var(--navy) 100%);
   }
 
-  /* Wrapper table that makes the patient header repeat on every printed
-     page (see @media print below). On screen it should be invisible as
-     a table — just stack normally like plain divs. */
-  .print-shell { width: 100%; border-collapse: collapse; }
-  .print-shell-head, .print-shell-body { padding: 0; border: none; text-align: left; }
-  .print-shell thead tr,
-  .print-shell tbody tr { background: transparent; border-bottom: none; }
-
   /* ── SECTION ── */
   .section { margin-bottom: 0; }
 
@@ -272,10 +264,9 @@
   .result-select.positive, .result-input.positive { color: #8b1a1a; border-color: #e0a0a0; background: #fff5f5; }
   .result-select.negative, .result-input.negative { color: #0e5e2e; border-color: #a0d4b0; background: #f0fff5; }
 
-  /* Malarial Parasite field: looks/behaves like the Negative/Positive
-     dropdowns (shows a "Negative" suggestion via native datalist) but
-     stays a free-text field so a positive result can be typed in
-     manually (e.g. species / parasite stage / count). */
+  /* Malarial Parasite field: shows a "Negative" suggestion via native
+     datalist (click the dropdown arrow) but stays a free-text field so
+     a positive result can be typed in manually (species / stage). */
   .result-input.result-combo {
     width: 150px;
     text-align: center;
@@ -409,12 +400,14 @@
 
   /* ── PRINT ── */
   @media print {
-    /* Side/bottom margins repeat on every page automatically via @page.
-       Top space is instead reserved by the repeating <thead> itself
-       (see .print-shell-head below) — that's what makes it correctly
-       repeat on every page, including the letterhead gap, without any
-       position:fixed guesswork. */
-    @page { size: A4 portrait; margin: 0 14mm 24mm 14mm; }
+    /* The original bug: this 101mm top gap was applied as element
+       PADDING, which print only honors on page 1 — so on page 2+ the
+       report content started right at the top of the page while the
+       fixed patient-header (which does correctly repeat every page)
+       still rendered 101mm down, landing on top of the results.
+       Fix: reserve the gap on the PAGE itself via @page margin, which
+       (unlike padding) is re-applied on every printed page. */
+    @page { size: A4 portrait; margin: 26mm 14mm 24mm 14mm; }
 
     body {
       background: transparent;
@@ -437,19 +430,19 @@
     .toolbar { display: none !important; }
     .storage-panel { display: none !important; }
 
-    /* This cell IS the <thead> of the print-shell table, so it reprints
-       at the top of every page automatically. The padding-top below is
-       the blank gap reserved for your pre-printed letterhead stationery
-       — because it lives on a genuinely repeating element (not just
-       padding on a normal flowed box), it now correctly repeats on
-       page 2, 3, etc. too. */
-    .print-shell-head {
-      padding-top: 35mm;
-    }
-
+    /* Chrome positions "fixed" elements relative to the page's CONTENT
+       box (i.e. inside the @page margin) when a print @page margin is
+       set, not relative to the raw physical sheet. Since @page now
+       reserves 101mm/14mm/14mm at top/left/right, we counter that by
+       shifting this element back up/left by exactly that much, so it
+       still lands at the same physical spot (68mm from the true top)
+       on every page — this is what actually makes it repeat correctly. */
     .patient-header {
-      position: static;
-      z-index: auto;
+      position: fixed;
+      top: -23mm;
+      left: 0;
+      right: 0;
+      z-index: 10;
       padding: 0;
       background: transparent;
       border-top: 1px solid #cfcfcf;
@@ -566,14 +559,6 @@
       page-break-inside: avoid;
     }
 
-    /* This row just holds the entire report body — unlike ordinary data
-       rows it MUST be allowed to break across pages, or the browser
-       would try to keep the whole report on one page. */
-    tr.print-shell-row {
-      break-inside: auto !important;
-      page-break-inside: auto !important;
-    }
-
     .col-test {
       width: 42%;
       min-width: 0;
@@ -628,13 +613,6 @@
 
     /* hide entire section when all its rows are empty */
     .section.all-empty { display: none !important; }
-
-    /* Also hide the *row* that wraps an empty section. Hiding a whole
-       table row is the simplest, most reliably-supported operation for
-       a browser's print pagination engine — far more robust than
-       relying on hiding a div buried inside a cell that also has to
-       fragment across pages. */
-    tr.print-shell-row.row-empty { display: none !important; }
 
     /* hide subsection block when all its rows are empty */
     .subsection-block.all-empty { display: none !important; }
@@ -715,14 +693,6 @@
     <div class="saved-reports" id="saved-reports"></div>
   </div>
 
-  <!-- The whole report below is wrapped in a single table whose <thead>
-       holds the patient-info bar. Repeating a <thead> on every printed
-       page is native, guaranteed browser behavior (unlike position:fixed
-       combined with @page margins, which is unreliable) — so the patient
-       details will now correctly repeat at the TOP of every page. -->
-  <table class="print-shell">
-  <thead><tr><td class="print-shell-head">
-
   <!-- PATIENT INFO -->
   <div class="patient-header">
     <div class="patient-header-title">Patient Information</div>
@@ -754,9 +724,6 @@
     </div>
   </div>
   <div class="accent-bar"></div>
-
-  </td></tr></thead>
-  <tbody><tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ CHEMICAL PATHOLOGY ══ -->
   <div class="section" id="sec-chem">
@@ -809,9 +776,6 @@
     </table>
   </div>
 
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
-
   <!-- ══ RENAL PROFILE ══ -->
   <div class="section" id="sec-renal">
     <div class="section-header">Renal Profile</div>
@@ -842,9 +806,6 @@
       </table>
     </div>
   </div>
-
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ LIPID PROFILE ══ -->
   <div class="section" id="sec-lipid">
@@ -884,9 +845,6 @@
       </tbody>
     </table>
   </div>
-
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ LIVER FUNCTION TESTS ══ -->
   <div class="section" id="sec-lft">
@@ -933,9 +891,6 @@
     </table>
   </div>
 
-
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ HEMATOLOGY ══ -->
   <div class="section" id="sec-hema">
@@ -1117,9 +1072,6 @@
 
   </div>
 
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
-
   <!-- ══ IMMUNE CHEMISTRY ══ -->
   <div class="section" id="sec-immune">
     <div class="section-header">Immune Chemistry</div>
@@ -1194,9 +1146,6 @@
       </tbody>
     </table>
   </div>
-
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ URINE RE ══ -->
   <div class="section" id="sec-urine">
@@ -1305,9 +1254,6 @@
     </div>
   </div>
 
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
-
   <!-- ══ ACR ══ -->
   <div class="section" id="sec-acr">
     <div class="section-header">ACR – Albumin Creatinine Ratio</div>
@@ -1340,9 +1286,6 @@
       </tbody>
     </table>
   </div>
-
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
 
   <!-- ══ SEROLOGY ══ -->
   <div class="section" id="sec-serology">
@@ -1467,17 +1410,11 @@
     </table>
   </div>
 
-  </td></tr>
-  <tr class="print-shell-row"><td class="print-shell-body">
-
   <!-- FOOTER -->
   <div class="report-footer">
     <div class="footer-note">Clinical correlation is advised. Results should be interpreted in conjunction with the patient's clinical history.</div>
 
   </div>
-
-  </td></tr></tbody>
-  </table>
 
 </div>
 
@@ -1559,17 +1496,6 @@
     document.querySelectorAll('.section').forEach(sec => {
       const filled = sec.querySelectorAll('tbody tr:not(.empty-row):not(.sub-label-row)').length;
       sec.classList.toggle('all-empty', filled === 0);
-    });
-
-    // Each section (and the footer) now lives in its own print-shell
-    // row. Hide that whole row when everything inside it is empty, so
-    // print pagination only ever has to skip a row, never fragment
-    // hidden content inside a shared cell.
-    document.querySelectorAll('tr.print-shell-row').forEach(row => {
-      const hasVisibleSection = Array.from(row.querySelectorAll('.section'))
-        .some(sec => !sec.classList.contains('all-empty'));
-      const hasNonSectionContent = row.querySelectorAll('.section').length === 0;
-      row.classList.toggle('row-empty', !hasVisibleSection && !hasNonSectionContent);
     });
   }
 
@@ -1733,43 +1659,15 @@
       .replace(/'/g, '&#039;');
   }
 
-  let removedPrintRows = [];
-
   function printReport() {
-    window.print();
-  }
-
-  // beforeprint/afterprint fire for EVERY print action — the in-page
-  // button, Ctrl+P, or the browser's own print menu — unlike a function
-  // tied only to a button click. This is what actually guarantees empty
-  // sections get stripped out no matter how printing was started.
-  window.addEventListener('beforeprint', () => {
     ['pf-name','pf-mr','pf-age','pf-doc','pf-col','pf-rep'].forEach(id => {
       const wrap = document.getElementById(id);
       const inp = wrap.querySelector('input');
       wrap.classList.toggle('field-empty', inp.value.trim() === '');
     });
     updateSectionVisibility();
-
-    // Physically remove empty-section rows from the DOM right before
-    // printing, instead of relying only on print-time CSS display:none.
-    // Some browsers render display:none unreliably for content nested
-    // inside a table that also uses a repeating <thead> across pages —
-    // removing the nodes outright leaves nothing ambiguous to render.
-    // They're restored immediately after the print dialog closes.
-    removedPrintRows = [];
-    document.querySelectorAll('tr.print-shell-row.row-empty').forEach(row => {
-      removedPrintRows.push({ node: row, next: row.nextSibling, parent: row.parentNode });
-      row.parentNode.removeChild(row);
-    });
-  });
-
-  window.addEventListener('afterprint', () => {
-    removedPrintRows.forEach(({ node, next, parent }) => {
-      parent.insertBefore(node, next);
-    });
-    removedPrintRows = [];
-  });
+    window.print();
+  }
 
   function clearAll() {
     document.querySelectorAll('.result-input').forEach(i => { i.value = ''; });
