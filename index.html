@@ -1715,6 +1715,19 @@
     const accentBar = live.querySelector('.accent-bar').cloneNode(true);
     const footer = live.querySelector('.report-footer').cloneNode(true);
 
+    // Chrome doesn't reliably re-render an <input>'s value in the
+    // COPIES it generates when repeating a <thead> across pages — the
+    // label prints fine (it's plain text) but the value can come out
+    // blank on page 2+, even though the exact same input prints
+    // correctly on page 1. Plain text has no such issue, and there's
+    // no need for an editable-looking box on a printed report anyway.
+    patientHeader.querySelectorAll('input.field-input').forEach(inp => {
+      const span = document.createElement('span');
+      span.className = inp.className;
+      span.textContent = inp.value;
+      inp.replaceWith(span);
+    });
+
     const visibleSections = Array.from(live.querySelectorAll(':scope > .section'))
       .filter(sec => !sec.classList.contains('all-empty'))
       .map(sec => {
