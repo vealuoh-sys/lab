@@ -236,6 +236,21 @@
     box-shadow: 0 0 0 2px rgba(14,124,123,0.15);
   }
 
+  .result-input[readonly] {
+    background: var(--teal-light);
+    color: var(--navy);
+    cursor: not-allowed;
+  }
+
+  .test-subnote {
+    display: block;
+    font-size: 9px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
   /* Positive / Negative dropdown for serology */
   .result-select {
     width: 110px;
@@ -717,7 +732,7 @@
       </div>
       <div class="patient-field" id="pf-age">
         <span class="field-label">Age / Sex</span>
-        <input class="field-input" id="f-age" type="text" placeholder="e.g. 28 Yrs / Male" oninput="markField('pf-age','f-age')">
+        <input class="field-input" id="f-age" type="text" placeholder="e.g. 28 Yrs / Male" oninput="markField('pf-age','f-age'); calculateEGFR();">
       </div>
       <div class="patient-field" id="pf-doc">
         <span class="field-label">Referring Doctor</span>
@@ -801,7 +816,7 @@
         <tbody>
           <tr class="empty-row" data-section="sec-renal" data-sub="sub-rfts">
             <td class="col-test">Creatinine</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="rft-creatinine" oninput="handleResult(this); calculateEGFR();"></td>
             <td class="col-unit">mg/dL</td>
             <td class="col-range">0.7 – 1.2 mg/dL</td>
           </tr>
@@ -810,6 +825,12 @@
             <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
             <td class="col-unit">mg/dL</td>
             <td class="col-range">10 – 50 mg/dL</td>
+          </tr>
+          <tr class="empty-row" data-section="sec-renal" data-sub="sub-rfts">
+            <td class="col-test">eGFR<span class="test-subnote">CKD-EPI Creatinine (2021) &middot; auto-calculated from Creatinine &amp; Age/Sex</span></td>
+            <td class="col-result"><input class="result-input" type="text" id="rft-egfr" readonly></td>
+            <td class="col-unit">mL/min/1.73m²</td>
+            <td class="col-range">G1: ≥90 &nbsp;|&nbsp; G2: 60–89 &nbsp;|&nbsp; G3a: 45–59 &nbsp;|&nbsp; G3b: 30–44 &nbsp;|&nbsp; G4: 15–29 &nbsp;|&nbsp; G5: &lt;15</td>
           </tr>
 
         </tbody>
@@ -1153,6 +1174,12 @@
           <td class="col-unit">ng/ml</td>
           <td class="col-range">4.63 – 204 µIU/mL</td>
         </tr>
+        <tr class="empty-row" data-section="sec-immune">
+          <td class="col-test">Total PSA</td>
+          <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+          <td class="col-unit">ng/mL</td>
+          <td class="col-range">0.0 – 4.0 ng/mL</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -1458,6 +1485,57 @@
     updateSectionVisibility();
   }
 
+  // ── Parse "28 Yrs / Male" style text into { age, sex } ──
+  function parseAgeSex(text) {
+    if (!text) return null;
+    const ageMatch = text.match(/(\d+(?:\.\d+)?)/);
+    const age = ageMatch ? parseFloat(ageMatch[1]) : null;
+    let sex = null;
+    if (/\bf(?:emale)?\b/i.test(text)) sex = 'F';
+    else if (/\bm(?:ale)?\b/i.test(text)) sex = 'M';
+    if (age === null || sex === null) return null;
+    return { age, sex };
+  }
+
+  // ── eGFR via CKD-EPI Creatinine (2021, race-free) equation ──
+  // Female, Scr ≤0.7: 142 × (Scr/0.7)^-0.241 × 0.9938^Age × 1.012
+  // Female, Scr  >0.7: 142 × (Scr/0.7)^-1.200 × 0.9938^Age × 1.012
+  // Male,   Scr ≤0.9: 142 × (Scr/0.9)^-0.302 × 0.9938^Age
+  // Male,   Scr  >0.9: 142 × (Scr/0.9)^-1.200 × 0.9938^Age
+  function calculateEGFR() {
+    const creatEl = document.getElementById('rft-creatinine');
+    const egfrEl = document.getElementById('rft-egfr');
+    if (!creatEl || !egfrEl) return;
+
+    const row = egfrEl.closest('tr');
+    const creatVal = parseFloat(creatEl.value);
+    const ageSexEl = document.getElementById('f-age');
+    const parsed = parseAgeSex(ageSexEl ? ageSexEl.value : '');
+
+    if (!creatVal || creatVal <= 0 || !parsed || parsed.age < 0) {
+      egfrEl.value = '';
+      row.classList.add('empty-row');
+      updateSectionVisibility();
+      return;
+    }
+
+    const { age, sex } = parsed;
+    let egfr;
+    if (sex === 'F') {
+      const k = 0.7;
+      const a = creatVal <= k ? -0.241 : -1.200;
+      egfr = 142 * Math.pow(creatVal / k, a) * Math.pow(0.9938, age) * 1.012;
+    } else {
+      const k = 0.9;
+      const a = creatVal <= k ? -0.302 : -1.200;
+      egfr = 142 * Math.pow(creatVal / k, a) * Math.pow(0.9938, age);
+    }
+
+    egfrEl.value = egfr.toFixed(1);
+    row.classList.remove('empty-row');
+    updateSectionVisibility();
+  }
+
   // ── Malarial Parasite field: type "Negative" (or pick it from the
   //    dropdown suggestion) for a negative result, or type findings
   //    manually (e.g. species / stage) for a positive result ──
@@ -1569,6 +1647,7 @@
     });
 
     updateSectionVisibility();
+    calculateEGFR();
   }
 
   function getReportLabel(data) {
