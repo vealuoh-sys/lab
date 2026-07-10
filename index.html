@@ -1641,7 +1641,6 @@
   // ══════════════════════════════════════════════════════════════
 
   const GEMINI_KEY_STORAGE = 'mmc_lab_gemini_api_key_v1';
-  const GEMINI_MODEL = 'gemini-2.5-flash';
 
   // Maps the JSON keys Gemini returns to the input element IDs.
   const CBC_GEMINI_KEY_MAP = {
@@ -1699,9 +1698,14 @@
     });
   }
 
+  // Tried in order; falls through to the next on a 404 (model
+  // retired/renamed) so a single Google-side deprecation doesn't
+  // break scanning outright. Update this list if Google announces a
+  // new default — see https://ai.google.dev/gemini-api/docs/models
+  const GEMINI_MODEL_CANDIDATES = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+
   async function callGeminiVisionForCBC(base64Data, mimeType) {
     const apiKey = getGeminiKey();
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
     const schema = { type: 'OBJECT', properties: {} };
     Object.keys(CBC_GEMINI_KEY_MAP).forEach(k => { schema.properties[k] = { type: 'STRING' }; });
@@ -1731,25 +1735,47 @@
       }
     };
 
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
+    let lastErr = null;
+    for (let i = 0; i < GEMINI_MODEL_CANDIDATES.length; i++) {
+      const model = GEMINI_MODEL_CANDIDATES[i];
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-    if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      const err = new Error(`Gemini API error (${resp.status}): ${errText.slice(0, 200)}`);
-      err.status = resp.status;
-      throw err;
+      let resp;
+      try {
+        resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+      } catch (networkErr) {
+        lastErr = networkErr;
+        continue;
+      }
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '');
+        const err = new Error(`Gemini API error (${resp.status}) on ${model}: ${errText.slice(0, 200)}`);
+        err.status = resp.status;
+        lastErr = err;
+        // Model missing/retired — try the next candidate. Any other
+        // status (auth, quota, bad request) means the model itself is
+        // fine, so stop and surface that error immediately.
+        if (resp.status === 404) continue;
+        throw err;
+      }
+
+      const data = await resp.json();
+      const text = data && data.candidates && data.candidates[0]
+        && data.candidates[0].content && data.candidates[0].content.parts
+        && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+      if (!text) {
+        lastErr = new Error(`Empty response from Gemini (${model})`);
+        continue;
+      }
+      return JSON.parse(text);
     }
 
-    const data = await resp.json();
-    const text = data && data.candidates && data.candidates[0]
-      && data.candidates[0].content && data.candidates[0].content.parts
-      && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
-    if (!text) throw new Error('Empty response from Gemini');
-    return JSON.parse(text);
+    throw lastErr || new Error('All Gemini model candidates failed');
   }
 
   function applyCBCResults(results) {
