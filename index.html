@@ -1735,44 +1735,63 @@
       }
     };
 
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const MAX_ATTEMPTS_PER_MODEL = 3; // 1 try + 2 retries
+    const BACKOFF_MS = [1000, 2500];  // wait before retry 1, retry 2
+
     let lastErr = null;
     for (let i = 0; i < GEMINI_MODEL_CANDIDATES.length; i++) {
       const model = GEMINI_MODEL_CANDIDATES[i];
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
-      let resp;
-      try {
-        resp = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-      } catch (networkErr) {
-        lastErr = networkErr;
-        continue;
-      }
+      for (let attempt = 0; attempt < MAX_ATTEMPTS_PER_MODEL; attempt++) {
+        let resp;
+        try {
+          resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+        } catch (networkErr) {
+          lastErr = networkErr;
+          break; // network failure — try next model, not worth retrying same one
+        }
 
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => '');
-        const err = new Error(`Gemini API error (${resp.status}) on ${model}: ${errText.slice(0, 200)}`);
-        err.status = resp.status;
-        lastErr = err;
-        // Model missing/retired — try the next candidate. Any other
-        // status (auth, quota, bad request) means the model itself is
-        // fine, so stop and surface that error immediately.
-        if (resp.status === 404) continue;
-        throw err;
-      }
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => '');
+          const err = new Error(`Gemini API error (${resp.status}) on ${model}: ${errText.slice(0, 200)}`);
+          err.status = resp.status;
+          lastErr = err;
 
-      const data = await resp.json();
-      const text = data && data.candidates && data.candidates[0]
-        && data.candidates[0].content && data.candidates[0].content.parts
-        && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
-      if (!text) {
-        lastErr = new Error(`Empty response from Gemini (${model})`);
-        continue;
+          // 404 = model missing/retired — no point retrying, go to next model.
+          if (resp.status === 404) break;
+
+          // 429 (rate/quota) or 5xx (transient server issue) — worth a
+          // short backoff-and-retry before giving up on this model.
+          const isTransient = resp.status === 429 || resp.status >= 500;
+          if (isTransient && attempt < MAX_ATTEMPTS_PER_MODEL - 1) {
+            setCBCScanStatus(`Gemini is busy (${resp.status}) — retrying…`, false);
+            await delay(BACKOFF_MS[attempt] || 2500);
+            continue;
+          }
+
+          // Non-transient (auth/bad request) — the model is fine, the
+          // request itself is broken, so surface it immediately.
+          if (!isTransient) throw err;
+
+          break; // transient but out of retries for this model — try next model
+        }
+
+        const data = await resp.json();
+        const text = data && data.candidates && data.candidates[0]
+          && data.candidates[0].content && data.candidates[0].content.parts
+          && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+        if (!text) {
+          lastErr = new Error(`Empty response from Gemini (${model})`);
+          break;
+        }
+        return JSON.parse(text);
       }
-      return JSON.parse(text);
     }
 
     throw lastErr || new Error('All Gemini model candidates failed');
@@ -1844,6 +1863,8 @@
         msg = 'Gemini model unavailable — the model name may need updating';
       } else if (err.status === 429) {
         msg = 'Free quota reached for now — wait a minute and try again';
+      } else if (err.status >= 500) {
+        msg = "Google's servers are busy right now — please try again in a moment";
       } else if (err.status) {
         msg = `Gemini error (${err.status}) — see browser console for details`;
       }
