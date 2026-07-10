@@ -251,6 +251,58 @@
     margin-top: 2px;
   }
 
+  .subsection-header-with-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cbc-scan-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .cbc-scan-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+    white-space: nowrap;
+    background: var(--white);
+  }
+
+  .cbc-scan-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .cbc-scan-status {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: var(--teal);
+    font-style: normal;
+    letter-spacing: 0.2px;
+  }
+
+  .cbc-scan-status.is-error { color: #8b1a1a; }
+
+  .result-input.scan-filled {
+    animation: scanFillPulse 2.2s ease-out;
+  }
+
+  @keyframes scanFillPulse {
+    0%   { background: #fff3b0; border-color: #e0c34a; }
+    100% { background: var(--white); border-color: var(--border); }
+  }
+
+  @media print {
+    .cbc-scan-controls { display: none !important; }
+    .subsection-header-with-actions { display: block; }
+  }
+
   /* Positive / Negative dropdown for serology */
   .result-select {
     width: 110px;
@@ -950,7 +1002,14 @@
 
     <!-- CBC -->
     <div class="subsection-block" id="sub-cbc">
-      <div class="subsection-header">Blood CP / FBC / CBC</div>
+      <div class="subsection-header subsection-header-with-actions">
+        <span>Blood CP / FBC / CBC</span>
+        <div class="cbc-scan-controls">
+          <input type="file" id="cbc-scan-input" accept="image/*" capture="environment" style="display:none" onchange="handleCBCScan(this)">
+          <button type="button" class="btn btn-secondary btn-small cbc-scan-btn" id="cbc-scan-btn" onclick="document.getElementById('cbc-scan-input').click()">📷 Scan CBC Report</button>
+          <span class="cbc-scan-status" id="cbc-scan-status"></span>
+        </div>
+      </div>
       <table id="cbc-unified-table">
         <thead>
           <tr>
@@ -968,67 +1027,67 @@
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">WBC (White Blood Cells)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-wbc" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">4 – 11 × 10³/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Neutrophils (NEU)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-neu" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">40 – 70 %</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Lymphocytes (LYM)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-lym" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">20 – 40 %</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Monocytes (Mon)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-mono" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">4 – 12 %</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Eosinophils (EOSI)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-eosi" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">2 – 6 %</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Basophils (BASO)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-baso" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">0 – 1.7 %</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Neutrophils</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-abs-neu" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">2 – 7 × 10³/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Lymphocytes</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-abs-lym" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">1 – 3 × 10³/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Monocytes</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-abs-mono" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">0.24 – 0.79 × 10³/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Eosinophils</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-abs-eosi" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">0.03 – 0.44 × 10³/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-wbc-label">
             <td class="col-test">Abs. Basophils</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-abs-baso" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">0 – 0.80 × 10³/µL</td>
           </tr>
@@ -1039,43 +1098,43 @@
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">RBC (Red Blood Cells)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-rbc" oninput="handleResult(this)"></td>
             <td class="col-unit">10⁶/µL</td>
             <td class="col-range">4.0 – 5.3 × 10⁶/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">Hemoglobin (HB)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-hb" oninput="handleResult(this)"></td>
             <td class="col-unit">g/dL</td>
             <td class="col-range">14 – 17 g/dL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">HCT / PCV (Hematocrit)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-hct" oninput="handleResult(this)"></td>
             <td class="col-unit">%</td>
             <td class="col-range">33 – 43 %</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">MCV (Mean Corpuscular Volume)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-mcv" oninput="handleResult(this)"></td>
             <td class="col-unit">fL</td>
             <td class="col-range">76 – 90 fL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">MCH (Mean Corpuscular Hemoglobin)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-mch" oninput="handleResult(this)"></td>
             <td class="col-unit">pg</td>
             <td class="col-range">25 – 31 pg</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">MCHC</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-mchc" oninput="handleResult(this)"></td>
             <td class="col-unit">g/dL</td>
             <td class="col-range">30 – 35 g/dL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-rbc-label">
             <td class="col-test">RDW (Red Cell Distribution Width)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-rdw" oninput="handleResult(this)"></td>
             <td class="col-unit">g/dL</td>
             <td class="col-range">11.5 – 12.5 g/dL</td>
           </tr>
@@ -1086,13 +1145,13 @@
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-plt-label">
             <td class="col-test">PLT (Platelet Count)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-plt" oninput="handleResult(this)"></td>
             <td class="col-unit">10³/µL</td>
             <td class="col-range">150 – 400 × 10³/µL</td>
           </tr>
           <tr class="empty-row" data-section="sec-hema" data-sub="sub-cbc" data-sublabel="sub-plt-label">
             <td class="col-test">MPV (Mean Platelet Volume)</td>
-            <td class="col-result"><input class="result-input" type="text" oninput="handleResult(this)"></td>
+            <td class="col-result"><input class="result-input" type="text" id="cbc-mpv" oninput="handleResult(this)"></td>
             <td class="col-unit">fL</td>
             <td class="col-range">7 – 11 fL</td>
           </tr>
@@ -1498,6 +1557,7 @@
      nothing to accidentally lose or need to restore afterward. -->
 <div class="page-wrapper" id="print-clone-container"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
   const STORAGE_KEY = 'mmc_lab_saved_reports_v1';
   const MAX_SAVED_REPORTS = 10;
@@ -1516,6 +1576,130 @@
     const val = input.value.trim();
     row.classList.toggle('empty-row', val === '');
     updateSectionVisibility();
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // CBC PHOTO SCAN — on-device OCR via Tesseract.js. No API key,
+  // no upload to any server: the image is read and processed
+  // entirely in the browser, then discarded.
+  // ══════════════════════════════════════════════════════════════
+
+  // Ordered field definitions for matching OCR'd lines to CBC inputs.
+  // Absolute-count entries are listed BEFORE their percentage
+  // counterparts (both use words like "NEUTROPHIL"), and matching
+  // consumes the line so a single printed line can't fill two fields.
+  const CBC_FIELD_DEFS = [
+    { id: 'cbc-abs-neu',  re: /ABS(?:OLUTE)?\.?\s*NEUTROPHIL/i },
+    { id: 'cbc-abs-lym',  re: /ABS(?:OLUTE)?\.?\s*LYMPHOCYTE/i },
+    { id: 'cbc-abs-mono', re: /ABS(?:OLUTE)?\.?\s*MONOCYTE/i },
+    { id: 'cbc-abs-eosi', re: /ABS(?:OLUTE)?\.?\s*EOSINOPHIL/i },
+    { id: 'cbc-abs-baso', re: /ABS(?:OLUTE)?\.?\s*BASOPHIL/i },
+    { id: 'cbc-neu',  re: /NEUTROPHIL/i },
+    { id: 'cbc-lym',  re: /LYMPHOCYTE/i },
+    { id: 'cbc-mono', re: /MONOCYTE/i },
+    { id: 'cbc-eosi', re: /EOSINOPHIL/i },
+    { id: 'cbc-baso', re: /BASOPHIL/i },
+    { id: 'cbc-wbc', re: /\bWBC\b|WHITE\s*BLOOD|TOTAL\s*LEU[CK]OCYTE|\bTLC\b/i },
+    { id: 'cbc-rbc', re: /\bRBC\b|RED\s*BLOOD/i },
+    { id: 'cbc-hb',  re: /H[AE]MOGLOBIN|\bHGB\b|\bHB\b/i },
+    { id: 'cbc-hct', re: /\bHCT\b|\bPCV\b|H[AE]MATOCRIT/i },
+    { id: 'cbc-mchc', re: /\bMCHC\b/i },
+    { id: 'cbc-mch',  re: /\bMCH\b/i },
+    { id: 'cbc-mcv',  re: /\bMCV\b/i },
+    { id: 'cbc-rdw',  re: /\bRDW\b/i },
+    { id: 'cbc-plt',  re: /PLATELET|\bPLT\b/i },
+    { id: 'cbc-mpv',  re: /\bMPV\b/i },
+  ];
+
+  // Extract the first plausible result value from a matched line.
+  function extractValueAfterMatch(line, re) {
+    const remainder = line.replace(re, '');
+    const numMatch = remainder.match(/-?\d+\.?\d*/);
+    return numMatch ? numMatch[0] : null;
+  }
+
+  function parseCBCText(rawText) {
+    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const usedLineIdx = new Set();
+    const results = {};
+
+    CBC_FIELD_DEFS.forEach(def => {
+      for (let i = 0; i < lines.length; i++) {
+        if (usedLineIdx.has(i)) continue;
+        if (def.re.test(lines[i])) {
+          const val = extractValueAfterMatch(lines[i], def.re);
+          if (val !== null) {
+            results[def.id] = val;
+            usedLineIdx.add(i);
+            break;
+          }
+        }
+      }
+    });
+
+    return results;
+  }
+
+  function applyCBCResults(results) {
+    let count = 0;
+    Object.entries(results).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = val;
+      handleResult(el);
+      el.classList.remove('scan-filled');
+      // restart the highlight animation
+      void el.offsetWidth;
+      el.classList.add('scan-filled');
+      count++;
+    });
+    updateSectionVisibility();
+    return count;
+  }
+
+  function setCBCScanStatus(text, isError) {
+    const status = document.getElementById('cbc-scan-status');
+    if (!status) return;
+    status.textContent = text;
+    status.classList.toggle('is-error', !!isError);
+  }
+
+  async function handleCBCScan(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const btn = document.getElementById('cbc-scan-btn');
+    if (btn) btn.disabled = true;
+    setCBCScanStatus('Reading image… this can take a few seconds', false);
+
+    try {
+      if (typeof Tesseract === 'undefined') {
+        throw new Error('OCR library failed to load');
+      }
+      const { data } = await Tesseract.recognize(file, 'eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            const pct = Math.round((m.progress || 0) * 100);
+            setCBCScanStatus(`Scanning… ${pct}%`, false);
+          }
+        }
+      });
+
+      const results = parseCBCText(data.text || '');
+      const count = applyCBCResults(results);
+
+      if (count === 0) {
+        setCBCScanStatus('No CBC values recognized — try a clearer, well-lit photo', true);
+      } else {
+        setCBCScanStatus(`Filled ${count} field${count === 1 ? '' : 's'} — please review before saving/printing`, false);
+      }
+    } catch (err) {
+      console.error('CBC scan error:', err);
+      setCBCScanStatus('Could not read that image — please try again', true);
+    } finally {
+      if (btn) btn.disabled = false;
+      input.value = ''; // allow re-selecting the same file
+    }
   }
 
   // ── Parse "28 Yrs / Male" style text into { age, sex } ──
