@@ -1641,7 +1641,7 @@
   // ══════════════════════════════════════════════════════════════
 
   const GEMINI_KEY_STORAGE = 'mmc_lab_gemini_api_key_v1';
-  const GEMINI_MODEL = 'gemini-2.0-flash';
+  const GEMINI_MODEL = 'gemini-2.5-flash';
 
   // Maps the JSON keys Gemini returns to the input element IDs.
   const CBC_GEMINI_KEY_MAP = {
@@ -1814,8 +1814,12 @@
         toggleGeminiKeyPanel(true);
       } else if (err.status === 400 || err.status === 403) {
         msg = 'API key issue — check your Gemini key and try again';
+      } else if (err.status === 404) {
+        msg = 'Gemini model unavailable — the model name may need updating';
       } else if (err.status === 429) {
-        msg = 'Free quota reached for now — try again shortly';
+        msg = 'Free quota reached for now — wait a minute and try again';
+      } else if (err.status) {
+        msg = `Gemini error (${err.status}) — see browser console for details`;
       }
       setCBCScanStatus(msg, true);
     } finally {
