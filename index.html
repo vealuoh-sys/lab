@@ -279,6 +279,13 @@
     cursor: not-allowed;
   }
 
+  .cbc-key-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+    background: var(--white);
+  }
+
   .cbc-scan-status {
     font-size: 10.5px;
     font-weight: 500;
@@ -288,6 +295,48 @@
   }
 
   .cbc-scan-status.is-error { color: #8b1a1a; }
+
+  .gemini-key-panel {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 36px;
+    background: var(--soft-bg);
+    border-bottom: 1px solid var(--border);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+
+  .gemini-key-panel.gemini-key-hidden { display: none; }
+
+  .gemini-key-input {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .gemini-key-input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(14,124,123,0.15);
+  }
+
+  .gemini-key-link {
+    font-size: 11px;
+    color: var(--teal);
+    text-decoration: none;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .gemini-key-link:hover { text-decoration: underline; }
 
   .result-input.scan-filled {
     animation: scanFillPulse 2.2s ease-out;
@@ -300,6 +349,7 @@
 
   @media print {
     .cbc-scan-controls { display: none !important; }
+    .gemini-key-panel { display: none !important; }
     .subsection-header-with-actions { display: block; }
   }
 
@@ -1006,9 +1056,15 @@
         <span>Blood CP / FBC / CBC</span>
         <div class="cbc-scan-controls">
           <input type="file" id="cbc-scan-input" accept="image/*" capture="environment" style="display:none" onchange="handleCBCScan(this)">
-          <button type="button" class="btn btn-secondary btn-small cbc-scan-btn" id="cbc-scan-btn" onclick="document.getElementById('cbc-scan-input').click()">📷 Scan CBC Report</button>
+          <button type="button" class="btn btn-secondary btn-small cbc-scan-btn" id="cbc-scan-btn" onclick="triggerCBCScan()">✨ Scan CBC Report (AI)</button>
+          <button type="button" class="btn btn-secondary btn-small cbc-key-btn" onclick="toggleGeminiKeyPanel()" title="Set your free Gemini API key">🔑 API Key</button>
           <span class="cbc-scan-status" id="cbc-scan-status"></span>
         </div>
+      </div>
+      <div class="gemini-key-panel gemini-key-hidden" id="gemini-key-panel">
+        <input type="password" class="gemini-key-input" id="gemini-key-input" placeholder="Paste your free Gemini API key">
+        <button type="button" class="btn btn-primary btn-small" onclick="saveGeminiKey()">Save Key</button>
+        <a class="gemini-key-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Get a free key →</a>
       </div>
       <table id="cbc-unified-table">
         <thead>
@@ -1557,7 +1613,6 @@
      nothing to accidentally lose or need to restore afterward. -->
 <div class="page-wrapper" id="print-clone-container"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
   const STORAGE_KEY = 'mmc_lab_saved_reports_v1';
   const MAX_SAVED_REPORTS = 10;
@@ -1579,65 +1634,122 @@
   }
 
   // ══════════════════════════════════════════════════════════════
-  // CBC PHOTO SCAN — on-device OCR via Tesseract.js. No API key,
-  // no upload to any server: the image is read and processed
-  // entirely in the browser, then discarded.
+  // CBC PHOTO SCAN — Google Gemini Vision API. Uses your own free
+  // API key (stored only in this browser's localStorage, sent
+  // directly to Google's API — never to any other server). Get a
+  // free key at https://aistudio.google.com/apikey
   // ══════════════════════════════════════════════════════════════
 
-  // Ordered field definitions for matching OCR'd lines to CBC inputs.
-  // Absolute-count entries are listed BEFORE their percentage
-  // counterparts (both use words like "NEUTROPHIL"), and matching
-  // consumes the line so a single printed line can't fill two fields.
-  const CBC_FIELD_DEFS = [
-    { id: 'cbc-abs-neu',  re: /ABS(?:OLUTE)?\.?\s*NEUTROPHIL/i },
-    { id: 'cbc-abs-lym',  re: /ABS(?:OLUTE)?\.?\s*LYMPHOCYTE/i },
-    { id: 'cbc-abs-mono', re: /ABS(?:OLUTE)?\.?\s*MONOCYTE/i },
-    { id: 'cbc-abs-eosi', re: /ABS(?:OLUTE)?\.?\s*EOSINOPHIL/i },
-    { id: 'cbc-abs-baso', re: /ABS(?:OLUTE)?\.?\s*BASOPHIL/i },
-    { id: 'cbc-neu',  re: /NEUTROPHIL/i },
-    { id: 'cbc-lym',  re: /LYMPHOCYTE/i },
-    { id: 'cbc-mono', re: /MONOCYTE/i },
-    { id: 'cbc-eosi', re: /EOSINOPHIL/i },
-    { id: 'cbc-baso', re: /BASOPHIL/i },
-    { id: 'cbc-wbc', re: /\bWBC\b|WHITE\s*BLOOD|TOTAL\s*LEU[CK]OCYTE|\bTLC\b/i },
-    { id: 'cbc-rbc', re: /\bRBC\b|RED\s*BLOOD/i },
-    { id: 'cbc-hb',  re: /H[AE]MOGLOBIN|\bHGB\b|\bHB\b/i },
-    { id: 'cbc-hct', re: /\bHCT\b|\bPCV\b|H[AE]MATOCRIT/i },
-    { id: 'cbc-mchc', re: /\bMCHC\b/i },
-    { id: 'cbc-mch',  re: /\bMCH\b/i },
-    { id: 'cbc-mcv',  re: /\bMCV\b/i },
-    { id: 'cbc-rdw',  re: /\bRDW\b/i },
-    { id: 'cbc-plt',  re: /PLATELET|\bPLT\b/i },
-    { id: 'cbc-mpv',  re: /\bMPV\b/i },
-  ];
+  const GEMINI_KEY_STORAGE = 'mmc_lab_gemini_api_key_v1';
+  const GEMINI_MODEL = 'gemini-2.0-flash';
 
-  // Extract the first plausible result value from a matched line.
-  function extractValueAfterMatch(line, re) {
-    const remainder = line.replace(re, '');
-    const numMatch = remainder.match(/-?\d+\.?\d*/);
-    return numMatch ? numMatch[0] : null;
+  // Maps the JSON keys Gemini returns to the input element IDs.
+  const CBC_GEMINI_KEY_MAP = {
+    wbc: 'cbc-wbc', neu: 'cbc-neu', lym: 'cbc-lym', mono: 'cbc-mono',
+    eosi: 'cbc-eosi', baso: 'cbc-baso',
+    absNeu: 'cbc-abs-neu', absLym: 'cbc-abs-lym', absMono: 'cbc-abs-mono',
+    absEosi: 'cbc-abs-eosi', absBaso: 'cbc-abs-baso',
+    rbc: 'cbc-rbc', hb: 'cbc-hb', hct: 'cbc-hct',
+    mcv: 'cbc-mcv', mch: 'cbc-mch', mchc: 'cbc-mchc', rdw: 'cbc-rdw',
+    plt: 'cbc-plt', mpv: 'cbc-mpv'
+  };
+
+  function getGeminiKey() {
+    return (localStorage.getItem(GEMINI_KEY_STORAGE) || '').trim();
   }
 
-  function parseCBCText(rawText) {
-    const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-    const usedLineIdx = new Set();
-    const results = {};
+  function toggleGeminiKeyPanel(forceOpen) {
+    const panel = document.getElementById('gemini-key-panel');
+    if (!panel) return;
+    const shouldOpen = typeof forceOpen === 'boolean'
+      ? forceOpen
+      : panel.classList.contains('gemini-key-hidden');
+    panel.classList.toggle('gemini-key-hidden', !shouldOpen);
+    if (shouldOpen) {
+      document.getElementById('gemini-key-input').value = getGeminiKey();
+    }
+  }
 
-    CBC_FIELD_DEFS.forEach(def => {
-      for (let i = 0; i < lines.length; i++) {
-        if (usedLineIdx.has(i)) continue;
-        if (def.re.test(lines[i])) {
-          const val = extractValueAfterMatch(lines[i], def.re);
-          if (val !== null) {
-            results[def.id] = val;
-            usedLineIdx.add(i);
-            break;
-          }
-        }
+  function saveGeminiKey() {
+    const val = document.getElementById('gemini-key-input').value.trim();
+    if (!val) {
+      alert('Please paste a valid Gemini API key.');
+      return;
+    }
+    localStorage.setItem(GEMINI_KEY_STORAGE, val);
+    toggleGeminiKeyPanel(false);
+    setCBCScanStatus('API key saved.', false);
+  }
+
+  function triggerCBCScan() {
+    if (!getGeminiKey()) {
+      toggleGeminiKeyPanel(true);
+      setCBCScanStatus('Add your free Gemini API key first', true);
+      return;
+    }
+    document.getElementById('cbc-scan-input').click();
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = () => reject(new Error('Failed to read the selected file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function callGeminiVisionForCBC(base64Data, mimeType) {
+    const apiKey = getGeminiKey();
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+    const schema = { type: 'OBJECT', properties: {} };
+    Object.keys(CBC_GEMINI_KEY_MAP).forEach(k => { schema.properties[k] = { type: 'STRING' }; });
+
+    const prompt = 'You are reading a photo of a printed CBC (Complete Blood Count) '
+      + 'lab report from a hematology analyzer. For each test below, extract ONLY the '
+      + "patient's RESULT value (never the reference range, never the unit) as a plain "
+      + 'numeric string, e.g. "7.5". If a test is not visible in the image, return "" '
+      + 'for it. Tests and their JSON keys: WBC (wbc), Neutrophils % (neu), '
+      + 'Lymphocytes % (lym), Monocytes % (mono), Eosinophils % (eosi), Basophils % '
+      + '(baso), Absolute Neutrophils (absNeu), Absolute Lymphocytes (absLym), '
+      + 'Absolute Monocytes (absMono), Absolute Eosinophils (absEosi), Absolute '
+      + 'Basophils (absBaso), RBC (rbc), Hemoglobin/HGB (hb), Hematocrit/HCT/PCV '
+      + '(hct), MCV (mcv), MCH (mch), MCHC (mchc), RDW (rdw), Platelet count/PLT '
+      + '(plt), MPV (mpv). Return valid JSON matching the given schema only.';
+
+    const body = {
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: mimeType, data: base64Data } }
+        ]
+      }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: schema
       }
+    };
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
     });
 
-    return results;
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      const err = new Error(`Gemini API error (${resp.status}): ${errText.slice(0, 200)}`);
+      err.status = resp.status;
+      throw err;
+    }
+
+    const data = await resp.json();
+    const text = data && data.candidates && data.candidates[0]
+      && data.candidates[0].content && data.candidates[0].content.parts
+      && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+    if (!text) throw new Error('Empty response from Gemini');
+    return JSON.parse(text);
   }
 
   function applyCBCResults(results) {
@@ -1670,32 +1782,42 @@
 
     const btn = document.getElementById('cbc-scan-btn');
     if (btn) btn.disabled = true;
-    setCBCScanStatus('Reading image… this can take a few seconds', false);
+    setCBCScanStatus('Reading image with AI…', false);
 
     try {
-      if (typeof Tesseract === 'undefined') {
-        throw new Error('OCR library failed to load');
-      }
-      const { data } = await Tesseract.recognize(file, 'eng', {
-        logger: m => {
-          if (m.status === 'recognizing text') {
-            const pct = Math.round((m.progress || 0) * 100);
-            setCBCScanStatus(`Scanning… ${pct}%`, false);
-          }
-        }
+      const apiKey = getGeminiKey();
+      if (!apiKey) throw Object.assign(new Error('No API key set'), { status: 'no-key' });
+
+      const base64 = await fileToBase64(file);
+      const mimeType = file.type || 'image/jpeg';
+
+      const parsed = await callGeminiVisionForCBC(base64, mimeType);
+
+      const results = {};
+      Object.entries(CBC_GEMINI_KEY_MAP).forEach(([geminiKey, elId]) => {
+        const val = (parsed[geminiKey] || '').toString().trim();
+        if (val !== '') results[elId] = val;
       });
 
-      const results = parseCBCText(data.text || '');
       const count = applyCBCResults(results);
 
       if (count === 0) {
-        setCBCScanStatus('No CBC values recognized — try a clearer, well-lit photo', true);
+        setCBCScanStatus('No CBC values recognized — try a clearer photo', true);
       } else {
         setCBCScanStatus(`Filled ${count} field${count === 1 ? '' : 's'} — please review before saving/printing`, false);
       }
     } catch (err) {
       console.error('CBC scan error:', err);
-      setCBCScanStatus('Could not read that image — please try again', true);
+      let msg = 'Could not read that image — please try again';
+      if (err.status === 'no-key') {
+        msg = 'Add your free Gemini API key first';
+        toggleGeminiKeyPanel(true);
+      } else if (err.status === 400 || err.status === 403) {
+        msg = 'API key issue — check your Gemini key and try again';
+      } else if (err.status === 429) {
+        msg = 'Free quota reached for now — try again shortly';
+      }
+      setCBCScanStatus(msg, true);
     } finally {
       if (btn) btn.disabled = false;
       input.value = ''; // allow re-selecting the same file
